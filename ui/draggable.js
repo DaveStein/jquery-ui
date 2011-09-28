@@ -24,7 +24,7 @@
   }
 }(function( $ ) {
 
-$.widget("ui.draggable", {
+$.widget( "ui.draggable", {
 
 	widgetEventPrefix: "drag",
 
