@@ -40,7 +40,7 @@ $.widget( "ui.draggable", {
 	},
 
 	_create: function() {
-	
+
 		// Either initialized element or the helper
 		this.dragEl = false,
 
@@ -70,13 +70,17 @@ $.widget( "ui.draggable", {
 		this.element.bind( "mousedown." + this.widgetName, $.proxy( this._mouseDown, this ) );
 
 	},
+	
+	_usingHelper : function() {
+		return ( this.options.helper === true || typeof this.options.helper === 'function' );
+	},
 
 	_setPosition: function() {
 
 		var left, top, position, cssPosition;
 
-		// Helper is appended to body so offset of element is all that"s needed
-		if ( this.options.helper === true ) {
+		// Helper is appended to body so offset of element is all that's needed
+		if ( this._usingHelper() ) {
 			return this.element.offset();
 		}
 
@@ -97,7 +101,7 @@ $.widget( "ui.draggable", {
 
 			return position;
 
-		} // cssPosition !+== absolute
+		}
 
 		/** When using relative, css values are checked **/
 
@@ -119,29 +123,47 @@ $.widget( "ui.draggable", {
 
 	_mouseDown: function( event ) {
 
+		// The actual dragging element, should always be a jQuery object
 		this.dragEl = this.element;
 
 		// Helper required, so clone, hide, and set reference
-		if ( this.options.helper === true ) {
+		if ( this._usingHelper() ) {
 
-			this.dragEl = this.element.clone();
+			// If getting a cloned helper
+			if ( this.options.helper === true ) {
 
-			// If source element has an ID, change ID of helper to avoid overlap
-			if ( this.element.attr( "id" ) ) {
+				this.dragEl = this.element.clone();
 
-				this.dragEl
+				// If source element has an ID, change ID of helper to avoid overlap
+				if ( this.element.attr( "id" ) ) {
+
+					this.dragEl.attr( "id", this.element.attr( "id" ) + "-" + this.widgetName );
+
+				}
+
+			} else {
+			
+				this.dragEl = this.options.helper();
+				
+				// If function was passed, it should return a DOMElement
+				if ( typeof this.dragEl.nodeType !== 'number' ) {
+					throw "Helper function must return a DOMElement";
+				}
+				
+				this.dragEl = $( this.dragEl );
+			
+			}
+
+			// Automatically make helper absolute
+			this.dragEl
 					.css({
-						position: "absolute",
-						display: "none"
+						position: "absolute"
 					})
-					.disableSelection()
-					.attr( "id", this.element.attr( "id" ) + "-" + this.widgetName );
-
-			} // id
+					.disableSelection();
 
 			$( "body" ).append( this.dragEl );
 
-		} // if this.options.helper = true
+		}
 
 		// Cache starting absolute and relative positions
 		this.startPosition = this._setPosition();
@@ -163,7 +185,7 @@ $.widget( "ui.draggable", {
 
 
 		// Set the helper up by actual element
-		if ( this.options.helper === true ) {
+		if ( this._usingHelper() ) {
 
 			// get the absolute position of element so that helper will know where to go
 			elOffset = this.element.offset();
@@ -174,7 +196,7 @@ $.widget( "ui.draggable", {
 				left: elOffset.left + "px"
 			});
 
-		} // this.options.height = true
+		}
 
 	},
 
@@ -219,7 +241,7 @@ $.widget( "ui.draggable", {
 
 		this.startCoords = {};
 
-		if ( this.options.helper === true ) {
+		if ( this._usingHelper() ) {
 			this.dragEl.remove();
 		}
 
