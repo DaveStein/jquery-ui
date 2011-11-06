@@ -35,7 +35,8 @@ $.widget( "ui.draggable", {
 	options: {
 		helper: false,
 		scrollSensitivity: 20,
-		scrollSpeed: 20
+		scrollSpeed: 20,
+		iframeFix: false
 	},
 
 	// dragEl: element being dragged (original or helper)
@@ -47,6 +48,36 @@ $.widget( "ui.draggable", {
 	// tempPosition: overridable CSS position of dragEl
 	// overflowOffset: offset of scroll parent
 	// overflow: object containing width and height keys of scroll parent
+
+	_blockFrames: function() {
+
+		var iframes = $('iframe'),
+			widget = this;
+
+		this.iframeBlocks = $('');
+
+		iframes.each( function() {
+
+			var iframe = $(this),
+				width = iframe.outerWidth(),
+				height = iframe.outerHeight(),
+				iframeOffset = iframe.offset(),
+				block = $('<div />');
+
+		  block.css({
+				position: 'absolute',
+				width: width+'px',
+				height: height+'px',
+				top: iframeOffset.top+'px',
+				left: iframeOffset.left+'px'
+			})
+			.appendTo( widget.document[0].body );
+
+			widget.iframeBlocks = widget.iframeBlocks.add( block );
+
+		});
+
+	},
 
 	_create: function() {
 		this.scrollParent = this.element.scrollParent();
@@ -146,6 +177,10 @@ $.widget( "ui.draggable", {
 
 		// The actual dragging element, should always be a jQuery object
 		this.dragEl = this.element;
+
+		if ( this.options.iframeFix === true ) {
+			this._blockFrames();
+		}
 
 		// Helper required
 		if ( this.options.helper ) {
@@ -254,6 +289,11 @@ $.widget( "ui.draggable", {
 		}
 
 		this.document.unbind( "." + this.widgetName );
+
+		if ( this.options.iframeFix === true ) {
+			this._unblockFrames();
+		}
+
 	},
 
 	// Uses event to determine new position of draggable, before any override from callbacks
@@ -318,6 +358,21 @@ $.widget( "ui.draggable", {
 		}
 
 		return ret;
+
+	},
+
+	_unblockFrames: function() {
+
+		if ( !this.iframeBlocks || !this.iframeBlocks.length ) {
+			return;
+		}
+
+		this.iframeBlocks.each( function() {
+
+			$(this).remove();
+
+		});
+
 	}
 });
 
