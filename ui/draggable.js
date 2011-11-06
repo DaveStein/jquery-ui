@@ -140,7 +140,7 @@ $.widget( "ui.draggable", {
 	},
 
 	_mouseDown: function( event ) {
-		var newLeft, newTop;
+		var newLeft, newTop, allowed;
 
 		// Prevent text selection, among other things
 		event.preventDefault();
@@ -199,11 +199,10 @@ $.widget( "ui.draggable", {
 
 		this._preparePosition( event );
 
-		this._trigger( "start", event, this._uiHash() );
+		allowed = this._trigger( "start", event, this._uiHash() );
 
-		// TODO: should user be able to change position of draggable, if event stopped?
 		// If user stops propagation, leave helper there ( if there's one ), disallow any CSS changes
-		if ( event.cancelBubble === true ) {
+		if ( allowed !== true ) {
 			this.document.unbind( "." + this.widgetName );
 			return;
 		}
@@ -217,15 +216,15 @@ $.widget( "ui.draggable", {
 	},
 
 	_mouseMove: function( event ) {
-		var newLeft, newTop;
+		var newLeft, newTop, allowed;
 
 		this._preparePosition( event );
 
-		this._trigger( "drag", event, this._uiHash() );
+		allowed = this._trigger( "drag", event, this._uiHash() );
 
-		// TODO: should user be able to change position of draggable, if event stopped?
+
 		// If user stops propagation, leave helper there ( if there's one ), disallow any CSS changes
-		if ( event.cancelBubble === true ) {
+		if ( allowed !== true ) {
 			this.document.unbind( "." + this.widgetName );
 			return;
 		}
@@ -238,13 +237,14 @@ $.widget( "ui.draggable", {
 
 	_mouseUp: function( event ) {
 
+		var allowed;
+
 		this._preparePosition( event );
 
-		this._trigger( "stop", event, this._uiHash() );
+		allowed = this._trigger( "stop", event, this._uiHash() );
 
-		// TODO: should user be able to change position of draggable, if event stopped?
 		// If user stops propagation, leave helper there, disallow any CSS changes
-		if ( event.cancelBubble !== true ) {
+		if ( allowed === true ) {
 
 			this._setCss( event );
 
@@ -309,14 +309,16 @@ $.widget( "ui.draggable", {
 	},
 
 	_uiHash: function( event ) {
-		return {
-			position: this.position,
-			offset: this.offset
+		var ret = {
+			position: this.position
+			// offset: this.offset
 		};
-	},
 
-	_destroy: function() {
-		this.element.removeClass( "ui-draggable" );
+		if ( this.options.helper ) {
+			ret.helper = this.dragEl;
+		}
+
+		return ret;
 	}
 });
 
