@@ -62,7 +62,7 @@ $.widget( "ui.draggable", {
 
 	// TODO: why is relative handled differently than fixed/absolute?
 	_getPosition: function() {
-		var left, top, position,
+		var left, top, position, offset,
 			scrollTop = this.scrollParent.scrollTop(),
 			scrollLeft = this.scrollParent.scrollLeft();
 
@@ -184,7 +184,7 @@ $.widget( "ui.draggable", {
 		};
 
 		// Cache the offset of scrollParent, if required for _handleScrolling
-		if ( this.scrollParent[0] != this.document[0] && this.scrollParent[0].tagName != 'HTML') {
+		if ( this.scrollParent[0] !== this.document[0] && this.scrollParent[0].tagName !== 'HTML') {
 			this.overflowOffset = this.scrollParent.offset();
 		}
 
