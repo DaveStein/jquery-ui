@@ -36,7 +36,7 @@ $.widget("ui.droppable", {
 		// greedy: false,
 		// hoverClass: false,
 		// scope: 'default',
-		tolerance: 'touch' //'intersect'
+		tolerance: 'intersect'
 	},
 
 	// draggableProportions: width and height of currently dragging draggable
@@ -60,34 +60,56 @@ $.widget("ui.droppable", {
 		$('*').live( "drag", $.proxy( this._drag, this ) );
 		$('*').live( "dragstart", $.proxy( this._dragStart, this ) );
 
+		this._bind( this.document, {
+			mouseup: "_mouseUp"
+		});
+
 	},
 
 	_drag: function( event, ui ) {
 
-		var rightEdge, bottomEdge, draggableRightEdge, draggableBottomEdge, xOverlap, yOverlap;
+		var handleFunc, edges,
+			tolerance = this.options.tolerance,
+			over = false;
 
-		switch ( this.options.tolerance ) {
+		switch ( tolerance ) {
 
-			case 'touch':
-				rightEdge = ( this.offset.left + this.proportions.width ),
-				bottomEdge = ( this.offset.top + this.proportions.height ),
-				draggableRightEdge = ( ui.offset.left + this.draggableProportions.width ),
-				draggableBottomEdge = ( ui.offset.top + this.draggableProportions.height ),
-				xOverlap = ( draggableRightEdge >= this.offset.left && ui.offset.left <= rightEdge ),
-				yOverlap = ( draggableBottomEdge >= this.offset.top && ui.offset.top <= bottomEdge );
+			case "intersect":
+			case "touch":
 
-				if ( xOverlap && yOverlap ) {
-					// TODO: properly fill out uiHash
-					this._trigger( "over", event, {} );
-				}
+				edges = {
+					right: ( this.offset.left + this.proportions.width ),
+					bottom: ( this.offset.top + this.proportions.height ),
+					draggableRight: ( ui.offset.left + this.draggableProportions.width ),
+					draggableBottom: ( ui.offset.top + this.draggableProportions.height )
+				};
+
+
+				handleFunc = "_handle" + tolerance.substr(0, 1 ).toUpperCase() + tolerance.substr( 1 );
+				over = this[ handleFunc ]( edges, ui );
 
 				break;
 
 		  default:
-				throw( "Invalid tolerance passed: " + this.options.tolerance + ". Allowed: " + this.allowedTolerance.join( ', ' ) );
-				break;
+				throw( "Invalid tolerance passed: " + this.options.tolerance + ". Allowed: " + this.allowedTolerance.join( ", " ) );
+
 	  }
 
+		// If there is sufficient overlap as deemed by tolerance
+		if ( over === true ) {
+
+			this._trigger( "over", event, this._uiHash() );
+			this.over = true;
+
+		}
+
+		// If there isn't enough overlap and droppable was previously flagged as over
+		else if ( this.over === true ) {
+
+			this.over = false;
+			this._trigger( "out", event, this._uiHash() );
+
+		}
 
 	},
 
@@ -95,11 +117,66 @@ $.widget("ui.droppable", {
 
 		var draggable = $( event.target );
 
+		// TODO: Possibly move into draggable hash, so if there are multiple droppables, it's not recalculating all the time
 		this.draggableProportions = { width: draggable[0].offsetWidth, height: draggable[0].offsetHeight };
 
 
 
+	},
+
+	// Determines if draggable is over droppable based on intersect tolerance
+	_handleIntersect: function( edges, ui ) {
+
+		var xDiff = edges.draggableRight - this.offset.left,
+			yDiff = edges.draggableBottom - this.offset.top,
+		  xHalfway = Math.round( this.proportions.width / 2 ),
+		  yHalfway = Math.round( this.proportions.height / 2 ),
+			xHalfOverlap = false;
+			yHalfOverlap = false;
+
+
+			// If Coming from left or right
+			xHalfOverlap = ( ui.offset.left < this.offset.left ) ?
+				( xDiff >= xHalfway ) :
+				( xDiff <= xHalfway + this.proportions.width );
+
+			// If Coming from top or bottom
+		  yHalfOverlap = ( ui.offset.top < this.offset.top ) ?
+				( yDiff >= yHalfway ) :
+				( yDiff <= yHalfway + this.proportions.height );
+
+	  return ( xHalfOverlap && yHalfOverlap );
+
+
+	},
+
+	// Determines if draggable is over droppable based on touch tolerance
+	_handleTouch: function( edges, ui ) {
+
+		var xOverlap = ( edges.draggableRight >= this.offset.left && ui.offset.left <= edges.right ),
+			yOverlap = ( edges.draggableBottom >= this.offset.top && ui.offset.top <= edges.bottom );
+
+		return ( xOverlap && yOverlap );
+
+	},
+
+	_mouseUp: function( event ) {
+
+		if ( this.over ) {
+			this._trigger( "drop", event, this._uiHash() );
+		}
+
+		this.over = false;
+
+	},
+
+	// TODO: fill me out
+	_uiHash: function() {
+
+		return {};
+
 	}
+
 
 });
 
