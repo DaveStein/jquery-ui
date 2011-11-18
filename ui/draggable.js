@@ -33,10 +33,10 @@ $.widget( "ui.draggable", {
 	widgetEventPrefix: "drag",
 
 	options: {
-		helper: false,
+		helper: null,
+		// TODO: remove scroll options
 		scrollSensitivity: 20,
-		scrollSpeed: 20,
-		iframeFix: false
+		scrollSpeed: 20
 	},
 
 	// dragEl: element being dragged (original or helper)
@@ -49,37 +49,28 @@ $.widget( "ui.draggable", {
 	// overflowOffset: offset of scroll parent
 	// overflow: object containing width and height keys of scroll parent
 
+	// TODO: move next to _unblockFrames()
 	_blockFrames: function() {
+		var body = this.document[0].body;
 
-		var iframes = $('iframe'),
-			widget = this;
+		this.iframeBlocks = this.document.find( "iframe" ).map(function() {
+			var iframe = $( this ),
+				iframeOffset = iframe.offset();
 
-		this.iframeBlocks = $('');
-
-		iframes.each( function() {
-
-			var iframe = $(this),
-				width = iframe.outerWidth(),
-				height = iframe.outerHeight(),
-				iframeOffset = iframe.offset(),
-				block = $('<div />');
-
-		  block.css({
-				position: 'absolute',
-				width: width+'px',
-				height: height+'px',
-				top: iframeOffset.top+'px',
-				left: iframeOffset.left+'px'
-			})
-			.appendTo( widget.document[0].body );
-
-			widget.iframeBlocks = widget.iframeBlocks.add( block );
-
+			return $( "<div>" )
+				.css({
+					position: "absolute",
+					width: iframe.outerWidth(),
+					height: iframe.outerHeight(),
+					top: iframeOffset.top,
+					left: iframeOffset.left
+				})
+				.appendTo( body )[0];
 		});
-
 	},
 
 	_create: function() {
+		// TODO: move to drag start in case DOM changes
 		this.scrollParent = this.element.scrollParent();
 
 		// Static position elements can't be moved with top/left
@@ -144,10 +135,7 @@ $.widget( "ui.draggable", {
 			else if ( event.pageX < ( scrollLeft + this.options.scrollSensitivity ) ) {
 				this.scrollParent.scrollLeft( scrollLeft - this.options.scrollSpeed );
 			}
-
 		} else {
-
-
 			// Handle vertical scrolling
 			if ( ( event.pageY + this.options.scrollSensitivity ) > ( this.overflow.height + this.overflowOffset.top ) ) {
 				this.scrollParent.scrollTop( scrollTop + this.options.scrollSpeed );
@@ -163,24 +151,17 @@ $.widget( "ui.draggable", {
 			else if ( ( event.pageX - this.options.scrollSensitivity ) < this.overflowOffset.left ) {
 				this.scrollParent.scrollLeft( scrollLeft - this.options.scrollSpeed );
 			}
-
-
 		}
-
 	},
 
 	_mouseDown: function( event ) {
-		var newLeft, newTop, allowed;
+		var newLeft, newTop;
 
 		// Prevent text selection, among other things
 		event.preventDefault();
 
 		// The actual dragging element, should always be a jQuery object
 		this.dragEl = this.element;
-
-		if ( this.options.iframeFix === true ) {
-			this._blockFrames();
-		}
 
 		// Helper required
 		if ( this.options.helper ) {
@@ -233,14 +214,13 @@ $.widget( "ui.draggable", {
 
 		this._preparePosition( event );
 
-		allowed = this._trigger( "start", event, this._uiHash() );
-
 		// If user stops propagation, leave helper there ( if there's one ), disallow any CSS changes
-		if ( allowed !== true ) {
+		if ( this._trigger( "start", event, this._uiHash() ) === false ) {
 			this.document.unbind( "." + this.widgetName );
 			return;
 		}
 
+		this._blockFrames();
 		this._setCss( event );
 
 		this._bind( this.document, {
@@ -250,15 +230,12 @@ $.widget( "ui.draggable", {
 	},
 
 	_mouseMove: function( event ) {
-		var newLeft, newTop, allowed;
+		var newLeft, newTop;
 
 		this._preparePosition( event );
 
-		allowed = this._trigger( "drag", event, this._uiHash() );
-
-
 		// If user stops propagation, leave helper there ( if there's one ), disallow any CSS changes
-		if ( allowed !== true ) {
+		if ( this._trigger( "drag", event, this._uiHash() ) === false ) {
 			this.document.unbind( "." + this.widgetName );
 			return;
 		}
@@ -270,30 +247,18 @@ $.widget( "ui.draggable", {
 	},
 
 	_mouseUp: function( event ) {
-
-		var allowed;
-
 		this._preparePosition( event );
 
-		allowed = this._trigger( "stop", event, this._uiHash() );
-
 		// If user stops propagation, leave helper there, disallow any CSS changes
-		if ( allowed === true ) {
-
+		if ( this._trigger( "stop", event, this._uiHash() ) === false ) {
 			this._setCss( event );
-
 			if ( this.options.helper ) {
 				this.dragEl.remove();
 			}
-
 		}
 
 		this.document.unbind( "." + this.widgetName );
-
-		if ( this.options.iframeFix === true ) {
-			this._unblockFrames();
-		}
-
+		this._unblockFrames();
 	},
 
 	// Uses event to determine new position of draggable, before any override from callbacks
@@ -314,7 +279,7 @@ $.widget( "ui.draggable", {
 			left: newLeft,
 			top: newTop
 		};
-		
+
 		// Refresh offset cache with new positions
 		this.offset.left = this.startOffset.left + leftDiff;
 		this.offset.top = this.startOffset.top + topDiff;
@@ -342,8 +307,8 @@ $.widget( "ui.draggable", {
 		}
 
 		this.dragEl.css({
-			left: newLeft + "px",
-			top: newTop + "px"
+			left: newLeft,
+			top: newTop
 		});
 	},
 
@@ -353,26 +318,19 @@ $.widget( "ui.draggable", {
 			offset: this.offset
 		};
 
+		// TODO: should we always set the helper?
 		if ( this.options.helper ) {
 			ret.helper = this.dragEl;
 		}
 
 		return ret;
-
 	},
 
 	_unblockFrames: function() {
-
-		if ( !this.iframeBlocks || !this.iframeBlocks.length ) {
-			return;
+		if ( this.iframeBlocks ) {
+			this.iframeBlocks.remove();
+			delete this.iframeBlocks;
 		}
-
-		this.iframeBlocks.each( function() {
-
-			$(this).remove();
-
-		});
-
 	}
 });
 
