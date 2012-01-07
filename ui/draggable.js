@@ -10,6 +10,7 @@
  *
  * Depends:
  *	jquery.ui.core.js
+ *	jquery.ui.interaction.js
  *	jquery.ui.widget.js
  */
 (function( factory ) {

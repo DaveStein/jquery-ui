@@ -14,6 +14,7 @@
  * Depends:
  *	jquery.ui.core.js
  *	jquery.ui.widget.js
+ *	jquery.ui.interaction.js
  *	jquery.ui.draggable.js
 >>>>>>> Droppable: Cleanup.:ui/jquery.ui.droppable.js
  */
