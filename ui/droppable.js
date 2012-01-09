@@ -25,6 +25,20 @@
 	}
 }(function( $ ) {
 
+var droppables = {};
+
+(function() {
+	var orig = $.ui.draggable.prototype._trigger;
+	$.ui.draggable.prototype._trigger = function( type, event, ui ) {
+		var droppable,
+			method = "_draggable" + type.substr( 0, 1 ).toUpperCase() + type.substr( 1 );
+		for ( droppable in droppables ) {
+			droppables[ droppable ][ method ].call( droppables[ droppable ], event, ui );
+		}
+		orig.apply( this, arguments );
+	};
+})();
+
 $.widget( "ui.droppable", {
 	version: "@VERSION",
 	widgetEventPrefix: "drop",
@@ -39,15 +53,8 @@ $.widget( "ui.droppable", {
 
 	_create: function() {
 		this.refreshPosition();
-
-		// TODO: make this much more efficient
-		// possibly just override draggable's methods
-		$( "*" ).live( "drag", $.proxy( this._drag, this ) );
-		$( "*" ).live( "dragstart", $.proxy( this._dragStart, this ) );
-
-		this._bind( this.document, {
-			mouseup: "_mouseUp"
-		});
+		this.guid = $.guid++;
+		droppables[ this.guid ] = this;
 	},
 
 	// TODO: rename to refresh()?
@@ -63,7 +70,19 @@ $.widget( "ui.droppable", {
 		};
 	},
 
-	_drag: function( event, ui ) {
+	_draggableStart: function( event, ui ) {
+		var draggable = $( event.target );
+
+		// TODO: Possibly move into draggable hash
+		// so if there are multiple droppables, it's not recalculating all the time
+		// TODO: Should this use the helper if it exists?
+		this.draggableProportions = {
+			width: draggable[0].offsetWidth,
+			height: draggable[0].offsetHeight
+		};
+	},
+
+	_draggableDrag: function( event, ui ) {
 		var edges = {
 				right: this.offset.left + this.proportions.width,
 				bottom: this.offset.top + this.proportions.height,
@@ -84,19 +103,7 @@ $.widget( "ui.droppable", {
 		}
 	},
 
-	_dragStart: function( event, ui ) {
-		var draggable = $( event.target );
-
-		// TODO: Possibly move into draggable hash
-		// so if there are multiple droppables, it's not recalculating all the time
-		this.draggableProportions = {
-			width: draggable[0].offsetWidth,
-			height: draggable[0].offsetHeight
-		};
-	},
-
-	// TODO: shouldn't this be dragStop?
-	_mouseUp: function( event ) {
+	_draggableStop: function( event, ui ) {
 		if ( this.over ) {
 			this._trigger( "drop", event, this._uiHash() );
 		}
@@ -107,6 +114,10 @@ $.widget( "ui.droppable", {
 	// TODO: fill me out
 	_uiHash: function() {
 		return {};
+	},
+
+	_destroy: function() {
+		delete droppables[ this.guid ];
 	}
 });
 
