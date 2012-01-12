@@ -42,6 +42,11 @@ $.widget( "ui.interaction", {
 	},
 
 	_interactionStart: function( event, position, hook ) {
+		// only one interaction can happen at a time
+		if ( interaction.started ) {
+			return;
+		}
+
 		if ( false !== this._start( event, position ) ) {
 			interaction.started = true;
 			interaction.hooks[ hook ].handle( this );
@@ -179,17 +184,24 @@ var touchHook = interaction.hooks.touch = {
 	}
 };
 
-// TODO: test mouse, pen
+// TODO: test mouse
 var pointerHook = interaction.hooks.msPointer = {
 	setup: function( widget, start ) {
 		widget._bind({
-			"MSPointerDown": function( event ) {
+			"MSPointerDown": function( _event ) {
+				var event = _event.originalEvent;
+
 				if ( pointerHook.id ) {
 					return;
 				}
 
-				pointerHook.id = event.originalEvent.pointerId;
-				event.originalEvent.preventManipulation();
+				// track which pointer is performing the interaction
+				pointerHook.id = event.pointerId;
+				// prevent panning/zooming
+				event.preventManipulation();
+				// prevent promoting pointer events to mouse events
+				event.preventMouseEvent();
+
 				start( event, {
 					left: event.pageX,
 					top: event.pageY
@@ -199,11 +211,13 @@ var pointerHook = interaction.hooks.msPointer = {
 	},
 
 	handle: function( widget ) {
-		function pointermove( event ) {
-			// always prevent manipulation to avoid zooming/scrolling
-			event.originalEvent.preventManipulation();
+		function move( _event ) {
+			var event = _event.originalEvent;
 
-			if ( event.originalEvent.pointerId !== pointerHook.id ) {
+			// always prevent manipulation to avoid panning/zooming
+			event.preventManipulation();
+
+			if ( event.pointerId !== pointerHook.id ) {
 				return;
 			}
 
@@ -213,8 +227,10 @@ var pointerHook = interaction.hooks.msPointer = {
 			});
 		}
 
-		function pointerup( event ) {
-			if ( event.originalEvent.pointerId !== pointerHook.id ) {
+		function stop( _event ) {
+			var event = _event.originalEvent;
+
+			if ( event.pointerId !== pointerHook.id ) {
 				return;
 			}
 
@@ -224,13 +240,15 @@ var pointerHook = interaction.hooks.msPointer = {
 			});
 			pointerHook.id = null;
 			widget.document
-				.unbind( "MSPointerMove", pointermove )
-				.unbind( "MSPointerUp", pointerup );
+				.unbind( "MSPointerMove", move )
+				.unbind( "MSPointerUp", stop )
+				.unbind( "MSPointerCancel", stop );
 		}
 
 		widget._bind( widget.document, {
-			"MSPointerMove": pointermove,
-			"MSPointerUp": pointerup
+			"MSPointerMove": move,
+			"MSPointerUp": stop,
+			"MSPointerCancel": stop
 		});
 	}
 };
