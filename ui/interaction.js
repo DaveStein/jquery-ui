@@ -184,8 +184,6 @@ var touchHook = interaction.hooks.touch = {
 	}
 };
 
-// TODO: test mouse
-// TODO: how can we detect a "right click" with a pen?
 var pointerHook = interaction.hooks.msPointer = {
 	setup: function( widget, start ) {
 		widget._bind({
@@ -193,6 +191,14 @@ var pointerHook = interaction.hooks.msPointer = {
 				var event = _event.originalEvent;
 
 				if ( pointerHook.id ) {
+					return;
+				}
+
+				// TODO: how can we detect a "right click" with a pen?
+				// TODO: get full details about which and button from MS
+				// touch and pen = 1
+				// primary mouse button = 2
+				if ( event.which > 2 ) {
 					return;
 				}
 
