@@ -34,6 +34,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	widgetEventPrefix: "drag",
 
 	options: {
+		handle: null,
 		helper: null
 	},
 
@@ -56,6 +57,10 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	},
 
 	/** interaction interface **/
+
+	_isValidTarget: function( element ) {
+		return this.options.handle ? element.is( this.options.handle ) : true;
+	},
 
 	_start: function( event, position ) {
 		// The actual dragging element, should always be a jQuery object
@@ -117,6 +122,8 @@ $.widget( "ui.draggable", $.ui.interaction, {
 
 		this._blockFrames();
 		this._setCss();
+
+		return true;
 	},
 
 	_move: function( event, position ) {
