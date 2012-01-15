@@ -116,7 +116,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		this._preparePosition( pointerPosition );
 
 		// If user cancels start, don't allow dragging
-		if ( this._trigger( "start", event, this._uiHash() ) === false ) {
+		if ( this._trigger( "start", event, this._uiHash( pointerPosition ) ) === false ) {
 			return false;
 		}
 
@@ -130,7 +130,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		this._preparePosition( pointerPosition );
 
 		// If user cancels drag, don't move the element
-		if ( this._trigger( "drag", event, this._uiHash() ) === false ) {
+		if ( this._trigger( "drag", event, this._uiHash( pointerPosition ) ) === false ) {
 			return;
 		}
 
@@ -144,7 +144,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		this._preparePosition( pointerPosition );
 
 		// If user cancels stop, leave helper there, disallow any CSS changes
-		if ( this._trigger( "stop", event, this._uiHash() ) !== false ) {
+		if ( this._trigger( "stop", event, this._uiHash( pointerPosition ) ) !== false ) {
 			this._setCss();
 			if ( this.options.helper ) {
 				this.dragEl.remove();
@@ -276,11 +276,12 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		});
 	},
 
-	_uiHash: function() {
+	_uiHash: function( pointerPosition ) {
 		// TODO: add originalPosition
 		var ret = {
 			position: this.position,
-			offset: this.offset
+			offset: this.offset,
+			pointer: pointerPosition
 		};
 
 		if ( this.options.helper ) {
