@@ -64,11 +64,14 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	//   appendTo option without a helper
 
 	_create: function() {
-		this._super( "_create" );
+		this._super();
+
 		// Static position elements can't be moved with top/left
 		if ( this.element.css( "position" ) === "static" ) {
 			this.element.css( "position", "relative" );
 		}
+
+		this.element.addClass( "ui-draggable" );
 	},
 
 	/** interaction interface **/
@@ -385,6 +388,11 @@ $.widget( "ui.draggable", $.ui.interaction, {
 			this.iframeBlocks.remove();
 			delete this.iframeBlocks;
 		}
+	},
+
+	_destroy: function() {
+		this.element.removeClass( "ui-draggable" );
+		this._super();
 	}
 });
 
