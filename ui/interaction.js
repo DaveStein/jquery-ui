@@ -39,6 +39,20 @@ $.widget( "ui.interaction", {
 		}
 	},
 
+	/** abstract methods **/
+
+	// _start: function( event, pointerPosition )
+	// _move: function( event, pointerPosition )
+	// _stop: function( event, pointerPosition )
+
+	/** protected **/
+
+	_isValidTarget: function( target ) {
+		return true;
+	},
+
+	/** internal **/
+
 	// a pass through to _interactionStart() which tracks the hook that was used
 	_startProxy: function( hook ) {
 		var that = this;
@@ -79,10 +93,6 @@ $.widget( "ui.interaction", {
 	_interactionStop: function( event, pointerPosition ) {
 		this._stop( event, pointerPosition );
 		interaction.started = false;
-	},
-
-	_isValidTarget: function( target ) {
-		return true;
 	}
 });
 
@@ -96,6 +106,7 @@ interaction.hooks.mouse = {
 	setup: function( widget, start ) {
 		widget._bind({
 			"mousedown": function( event ) {
+				// only react to the primary button
 				if ( event.which === 1 ) {
 					var started = start( event, event.target, {
 						x: event.pageX,
@@ -103,6 +114,7 @@ interaction.hooks.mouse = {
 					});
 
 					if ( started ) {
+						// prevent selection
 						event.preventDefault();
 					}
 				}
