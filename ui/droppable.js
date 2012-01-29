@@ -63,8 +63,7 @@ $.widget( "ui.droppable", {
 
 	/** public **/
 
-	// TODO: rename to refresh()?
-	refreshPosition: function() {
+	refresh: function() {
 		this.offset = this.element.offset();
 		this.proportions = {
 			width: this.element.outerWidth(),
