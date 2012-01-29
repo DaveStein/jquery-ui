@@ -74,8 +74,12 @@ $.widget( "ui.droppable", {
 
 	/** internal **/
 
-	_accept: function( element ) {
-		return this.options.accept ? element.is( this.options.accept ) : true;
+	_start: function( event, ui ) {
+		if ( this.options.accept && !$( event.target ).is( this.options.accept ) ) {
+			return false;
+		}
+
+		this._trigger( "activate", event, this._uiHash() );
 	},
 
 	_drag: function( event, ui ) {
@@ -100,10 +104,12 @@ $.widget( "ui.droppable", {
 		}
 	},
 
-	_dragStop: function( event, ui ) {
+	_stop: function( event, ui ) {
 		if ( this.over ) {
 			this._trigger( "drop", event, this._uiHash() );
 		}
+
+		this._trigger( "deactivate", event, this._uiHash() );
 
 		this.over = false;
 	},
@@ -150,8 +156,7 @@ $.extend( $.ui.droppable, {
 
 	_draggableStart: function( event, ui ) {
 		var droppable,
-			target = $( event.target ),
-			element = ui.helper || target;
+			element = ui.helper || $( event.target );
 
 		this.draggableProportions = {
 			width: element.outerWidth(),
@@ -160,7 +165,7 @@ $.extend( $.ui.droppable, {
 
 		this.active = [];
 		for ( droppable in droppables ) {
-			if ( droppables[ droppable ]._accept( target ) ) {
+			if ( droppables[ droppable ]._start( event, ui ) !== false ) {
 				this.active.push( droppables[ droppable ] );
 			}
 		}
@@ -174,7 +179,7 @@ $.extend( $.ui.droppable, {
 
 	_draggableStop: function( event, ui ) {
 		$.each( this.active, function() {
-			this._dragStop( event, ui );
+			this._stop( event, ui );
 		});
 	}
 });
