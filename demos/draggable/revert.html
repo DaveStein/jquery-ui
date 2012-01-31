@@ -11,31 +11,25 @@
 	<script src="../../ui/draggable.js"></script>
 	<link rel="stylesheet" href="../demos.css">
 	<style>
-	#draggable, #draggable2 { width: 100px; height: 100px; padding: 0.5em; float: left; margin: 0 10px 10px 0; }
+	.ui-draggable { width: 100px; height: 100px; padding: 0.5em; float: left; margin: 0 10px 10px 0; }
 	</style>
 	<script>
-	$.ui.draggable.prototype.options.revert = false;
-	$( document ).bind( "dragstop", function( event, ui ) {
-		var elem,
-			helper = ui.helper,
-			draggable = $( event.target ).data( "draggable" );
-
-		if ( !draggable || !draggable.options.revert ) {
-			return;
-		}
-
-		elem = helper || draggable.element;
-		(helper || draggable.element).animate( ui.originalPosition, function() {
-			if ( helper ) {
-				helper.remove();
+	$(function() {
+		$( "#draggable" ).draggable({
+			stop: function( event, ui ) {
+				$( event.target ).animate( ui.originalPosition );
 			}
 		});
-		event.preventDefault();
-	});
-
-	$(function() {
-		$( "#draggable" ).draggable({ revert: true });
-		$( "#draggable2" ).draggable({ revert: true, helper: true });
+		$( "#draggable2" ).draggable({
+			helper: true,
+			stop: function( event, ui ) {
+				ui.helper.animate( ui.originalPosition, function() {
+					ui.helper.remove();
+				});
+				// prevent the draggable plugin from removing the helper
+				event.preventDefault();
+			}
+		});
 	});
 	</script>
 </head>
