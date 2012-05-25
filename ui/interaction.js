@@ -104,7 +104,7 @@ $.extend( interaction, {
 
 interaction.hooks.mouse = {
 	setup: function( widget, start ) {
-		widget._bind({
+		widget._bind( widget.widget(), {
 			"mousedown": function( event ) {
 				// only react to the primary button
 				if ( event.which === 1 ) {
@@ -163,7 +163,7 @@ function getTouch( event ) {
 
 var touchHook = interaction.hooks.touch = {
 	setup: function( widget, start ) {
-		widget._bind({
+		widget._bind( widget.widget(), {
 			"touchstart": function( event ) {
 				var touch, started;
 
@@ -228,7 +228,7 @@ var touchHook = interaction.hooks.touch = {
 
 var pointerHook = interaction.hooks.msPointer = {
 	setup: function( widget, start ) {
-		widget._bind({
+		widget._bind( widget.widget(), {
 			"MSPointerDown": function( _event ) {
 				var started,
 					event = _event.originalEvent;
