@@ -24,7 +24,7 @@
 	}
 }(function( $ ) {
 
-var interaction; // = $.ui.interaction
+var interaction, touchHook, pointerHook;
 
 $.widget( "ui.interaction", {
 	version: "@VERSION",
@@ -58,7 +58,7 @@ $.widget( "ui.interaction", {
 		var that = this;
 		return function( event, target, pointerPosition ) {
 			return that._interactionStart( event, target, pointerPosition, hook );
-		}
+		};
 	},
 
 	_interactionStart: function( event, target, pointerPosition, hook ) {
@@ -161,7 +161,7 @@ function getTouch( event ) {
 	}
 }
 
-var touchHook = interaction.hooks.touch = {
+touchHook = interaction.hooks.touch = {
 	setup: function( widget, start ) {
 		widget._bind( widget.widget(), {
 			"touchstart": function( event ) {
@@ -226,7 +226,7 @@ var touchHook = interaction.hooks.touch = {
 	}
 };
 
-var pointerHook = interaction.hooks.msPointer = {
+pointerHook = interaction.hooks.msPointer = {
 	setup: function( widget, start ) {
 		widget._bind( widget.widget(), {
 			"MSPointerDown": function( _event ) {
