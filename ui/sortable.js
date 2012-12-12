@@ -459,7 +459,6 @@ $.widget( "ui.sortable", $.ui.interaction, {
 	},
 
 	_blockFrames: function() {
-		var body = this.document[0].body;
 
 		this.iframeBlocks = this.document.find( "iframe" ).map(function() {
 			var iframe = $( this ),
@@ -473,7 +472,7 @@ $.widget( "ui.sortable", $.ui.interaction, {
 					top: iframeOffset.top,
 					left: iframeOffset.left
 				})
-				.appendTo( body )[0];
+				.appendTo( iframe.parent() )[0];
 		});
 	},
 
