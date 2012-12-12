@@ -599,7 +599,7 @@ test( "disabled", function() {
 });
 
 test( "{ grid: [50, 50] }, relative", function() {
-	expect( 4 );
+	expect( 2 );
 
 	var element = $( "#draggable1" ).draggable({ grid: [ 50, 50 ] });
 	TestHelpers.draggable.testDrag( element, element, 24, 24, 0, 0, "grid: [50, 50] relative" );
