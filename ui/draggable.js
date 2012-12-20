@@ -496,7 +496,7 @@ if ( $.uiBackCompat !== false ) {
 			axis: false
 		},
 
-		_create : function() {
+		_create: function() {
 
 			var self = this;
 
@@ -519,13 +519,42 @@ if ( $.uiBackCompat !== false ) {
 
 	});
 
+	// cancel option
+	$.widget( "ui.draggable", $.ui.draggable, {
+		options: {
+			cancel: null
+		},
+
+		_create: function() {
+
+			this._super();
+
+			if ( this.options.cancel !== null ) {
+				this.options.exclude = this.options.cancel;
+			}
+
+		},
+
+		_setOption: function( key, value ) {
+
+			if ( key !== 'cancel' ) {
+				return this._super( key, value );
+			}
+
+			this._super( key, value );
+			this.options.exclude = this.options.cancel;
+
+		}
+
+	});
+
 	// cursor option
 	$.widget( "ui.draggable", $.ui.draggable, {
 		options: {
 			cursor: "auto"
 		},
 
-		_create : function() {
+		_create: function() {
 
 			var startCursor, self, body;
 
@@ -565,7 +594,7 @@ if ( $.uiBackCompat !== false ) {
 			cursorAt: false
 		},
 
-		_create : function() {
+		_create: function() {
 
 			var self = this,
 				cursorAt;
@@ -607,7 +636,7 @@ if ( $.uiBackCompat !== false ) {
 			grid: false
 		},
 
-		_create : function() {
+		_create: function() {
 
 			var x, y, currentX, currentY;
 
@@ -667,7 +696,7 @@ if ( $.uiBackCompat !== false ) {
 			opacity: false
 		},
 
-		_create : function() {
+		_create: function() {
 
 			var self = this,
 				originalOpacity;
@@ -708,7 +737,7 @@ if ( $.uiBackCompat !== false ) {
 			revertDuration: 500
 		},
 
-		_create : function() {
+		_create: function() {
 
 			var self = this,
 				originalLeft, originalTop, originalPosition;
@@ -750,7 +779,7 @@ if ( $.uiBackCompat !== false ) {
 			zIndex: false
 		},
 
-		_create : function() {
+		_create: function() {
 
 			var self = this,
 				originalZIndex;
