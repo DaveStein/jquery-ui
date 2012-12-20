@@ -67,6 +67,9 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	_create: function() {
 		this._super();
 
+		this.scrollSensitivity = 20;
+		this.scrollSpeed = 5;
+
 		// Static position elements can't be moved with top/left
 		if ( this.element.css( "position" ) === "static" ) {
 			this.element.css( "position", "relative" );
@@ -263,13 +266,10 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	},
 
 	_handleScrolling: function( pointerPosition ) {
-		var scrollTop = this.scrollParent.scrollTop(),
+		var self = this,
+			scrollTop = this.scrollParent.scrollTop(),
 			scrollLeft = this.scrollParent.scrollLeft(),
-			scrollSensitivity = 20,
-			baseSpeed = 5,
-			speed = function( distance ) {
-				return baseSpeed + Math.round( distance / 2 );
-			},
+			scrollSensitivity = this.scrollSensitivity,
 			// overflowOffset is only set when scrollParent is not doc/html
 			overflowLeft = this.overflowOffset ?
 				this.overflowOffset.left :
@@ -285,20 +285,24 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		// Handle vertical scrolling
 		if ( yBottom < scrollSensitivity ) {
 			this.scrollParent.scrollTop( scrollTop +
-				speed( scrollSensitivity - yBottom ) );
+				this._speed( scrollSensitivity - yBottom ) );
 		} else if ( yTop < scrollSensitivity ) {
 			this.scrollParent.scrollTop( scrollTop -
-				speed( scrollSensitivity - yTop ) );
+				this._speed( scrollSensitivity - yTop ) );
 		}
 
 		// Handle horizontal scrolling
 		if ( xRight < scrollSensitivity ) {
 			this.scrollParent.scrollLeft( scrollLeft +
-				speed( scrollSensitivity - xRight ) );
+				this._speed( scrollSensitivity - xRight ) );
 		} else if ( xLeft < scrollSensitivity ) {
 			this.scrollParent.scrollLeft( scrollLeft -
-				speed( scrollSensitivity - xLeft ) );
+				this._speed( scrollSensitivity - xLeft ) );
 		}
+	},
+
+	_speed: function( distance ) {
+		return this.scrollSpeed + Math.round( distance / 2 );
 	},
 
 	// Uses event to determine new position of draggable, before any override from callbacks
@@ -565,7 +569,7 @@ if ( $.uiBackCompat !== false ) {
 
 			// Cache original cursor to set back
 			this.element.on( "dragstart", function( event, ui ) {
-			
+
 				if ( self.options.cursor ) {
 					startCursor = body[0].style.cursor;
 				}
@@ -606,10 +610,10 @@ if ( $.uiBackCompat !== false ) {
 			this._super();
 
 			this.element.on( "dragbeforestart", function( event, ui ) {
-			
+
 				var elem = self.dragEl,
 					cursorAt = self.options.cursorAt;
-					
+
 				// No need to continue
 				if ( !cursorAt ) {
 					return;
@@ -641,13 +645,13 @@ if ( $.uiBackCompat !== false ) {
 
 		_create: function() {
 
-			var self = this, 
+			var self = this,
 				currentX, currentY;
 
 			this._super();
 
 			this.element.on( "dragbeforestart", function( event, ui ) {
-			
+
 				if ( !self.options.grid ) {
 					return;
 				}
@@ -659,11 +663,11 @@ if ( $.uiBackCompat !== false ) {
 			});
 
 			this.element.on( "drag", function( event, ui ) {
-			
+
 				if ( !self.options.grid ) {
 					return;
 				}
-			
+
 				// Save off the intended intervals
 				var x = self.options.grid[0],
 					y = self.options.grid[1];
@@ -711,7 +715,7 @@ if ( $.uiBackCompat !== false ) {
 			this._super();
 
 			this.element.on( "dragstart", function( event, ui ) {
-			
+
 				// No need to continue
 				if ( !self.options.opacity ) {
 					return;
@@ -726,7 +730,7 @@ if ( $.uiBackCompat !== false ) {
 			});
 
 			this.element.on( "dragstop", function( event, ui ) {
-			
+
 				// No need to continue
 				if ( !self.options.opacity ) {
 					return;
@@ -757,7 +761,7 @@ if ( $.uiBackCompat !== false ) {
 			this._super();
 
 			this.element.on( "dragbeforestart", function( event, ui ) {
-			
+
 				// No need to continue
 				if ( !self.options.revert ) {
 					return;
@@ -771,7 +775,7 @@ if ( $.uiBackCompat !== false ) {
 			});
 
 			this.element.on( "dragstop", function( event, ui ) {
-			
+
 				// No need to continue
 				if ( !self.options.revert ) {
 					return;
@@ -804,7 +808,7 @@ if ( $.uiBackCompat !== false ) {
 			this._super();
 
 			this.element.on( "dragstart", function( event, ui ) {
-			
+
 				// No need to continue
 				if ( !self.options.zIndex ) {
 					return;
@@ -819,7 +823,7 @@ if ( $.uiBackCompat !== false ) {
 			});
 
 			this.element.on( "dragstop", function( event, ui ) {
-			
+
 				// No need to continue
 				if ( !self.options.zIndex ) {
 					return;
@@ -829,6 +833,62 @@ if ( $.uiBackCompat !== false ) {
 				self.dragEl.css( 'z-index', originalZIndex );
 
 			});
+
+		}
+
+	});
+
+	// TODO: need droppable working
+	// scope option
+	$.widget( "ui.draggable", $.ui.draggable, {
+		options: {
+			scope: "default"
+		}
+	});
+
+	// scroll + scrollSensitivity + scrollSpeedType option
+	$.widget( "ui.draggable", $.ui.draggable, {
+		options: {
+			scroll: true,
+			scrollSpeed: null,
+			scrollSensitivity: null
+		},
+		_create : function() {
+
+			var self = this,
+				handleScroll = this._handleScrolling,
+				speed = this._speed;
+
+			this._super();
+
+			this._speed = function( distance ) {
+
+				if ( self.options.scrollSpeed !== null ) {
+
+					self.scrollSpeed = self.options.scrollSpeed;
+
+					// Undo calculation that makes things go faster as distance increases
+					distance = 0;
+				}
+
+				return speed.call( self, distance );
+
+			};
+
+			// Wrap member function to check for ability to scroll
+			this._handleScrolling = function( pointerPosition ) {
+
+				if ( !self.options.scroll ) {
+					return;
+				}
+
+				if ( self.options.scrollSensitivity !== null ) {
+					self.scrollSensitivity = self.options.scrollSensitivity;
+				}
+
+				handleScroll.call( self, pointerPosition );
+
+			};
 
 		}
 
