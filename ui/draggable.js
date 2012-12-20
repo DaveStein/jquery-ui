@@ -498,40 +498,25 @@ if ( $.uiBackCompat !== false ) {
 
 		_create : function() {
 
-			var startLeft, startTop;
+			var self = this;
 
 			this._super();
 
-			// If movement should only move left/right
-			if ( this.options.axis === "x" ) {
+			// On drag, make sure top does not change so axis is locked
+			this.element.on( "drag", function( event, ui ) {
 
-				// Cache starting top position to keep it from moving
-				this.element.on( "dragbeforestart", function( event, ui ) {
-					startTop = ui.position.top;
-				});
+				if ( self.options.axis === "x" ) {
+					ui.position.top = ui.originalPosition.top;
+				}
 
-				// On drag, make sure top does not change so axis is locked
-				this.element.on( "drag", function( event, ui ) {
-					ui.position.top = startTop;
-				});
+				if ( self.options.axis === "y" ) {
+					ui.position.left = ui.originalPosition.left;
+				}
 
-			}
-			// If movement should only move up/down
-			else if ( this.options.axis === "y" ) {
-
-				// Cache starting left position to keep it from moving
-				this.element.on( "dragbeforestart", function( event, ui ) {
-					startLeft = ui.position.left;
-				});
-
-				// On drag, make sure top does not change so axis is locked
-				this.element.on( "drag", function( event, ui ) {
-					ui.position.left = startLeft;
-				});
-
-			}
+			});
 
 		}
+
 	});
 
 	// cursor option
@@ -553,7 +538,7 @@ if ( $.uiBackCompat !== false ) {
 
 				// Cache original cursor to set back
 				this.element.on( "dragstart", function( event, ui ) {
-					startCursor = body.style.cursor;
+					startCursor = body[0].style.cursor;
 				});
 
 				// Set cursor to what user wants during drag
