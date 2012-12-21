@@ -94,8 +94,6 @@ $.widget( "ui.sortable", $.ui.interaction, {
 
 	_start: function( event, pointerPosition ) {
 
-		var offset;
-
 		// The actual dragging element, should always be a jQuery object
 		// this.dragEl = this.options.helper ?
 			// this._createHelper( pointerPosition ) :
@@ -177,7 +175,7 @@ $.widget( "ui.sortable", $.ui.interaction, {
 
 	_move: function( event, pointerPosition ) {
 
-		var sort, sortItem, top, left, sortIndex,
+		var sort, sortItem, sortIndex,
 			len = this.sortablePositions.length;
 
 
@@ -246,8 +244,6 @@ $.widget( "ui.sortable", $.ui.interaction, {
 	},
 
 	_stop: function( event, pointerPosition ) {
-
-		var parent, next;
 
 		this._preparePosition( pointerPosition );
 

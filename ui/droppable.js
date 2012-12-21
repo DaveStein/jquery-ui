@@ -73,7 +73,7 @@ $.widget( "ui.droppable", {
 
 	/** internal **/
 
-	_start: function( event, ui ) {
+	_start: function( event ) {
 		if ( this.options.accept && !$( event.target ).is( this.options.accept ) ) {
 			return false;
 		}
@@ -103,7 +103,7 @@ $.widget( "ui.droppable", {
 		}
 	},
 
-	_stop: function( event, ui ) {
+	_stop: function( event ) {
 		if ( this.over ) {
 			this._trigger( "drop", event, this._uiHash() );
 		}
