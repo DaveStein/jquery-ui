@@ -222,7 +222,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		// If user cancels stop, leave helper there
 		if ( this._trigger( "stop", event, this._fullHash( pointerPosition ) ) !== false ) {
 			if ( this.options.helper ) {
-				delete this.element.data( 'draggable' ).helper;
+				delete this.element.data( 'uiDraggable' ).helper;
 				this.dragEl.remove();
 			}
 			this._resetDomPosition();
@@ -256,7 +256,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 			helper.appendTo( this._appendToEl() || this.document[0].body );
 		}
 
-		this.element.data( 'draggable' ).helper = helper;
+		this.element.data( 'uiDraggable' ).helper = helper;
 
 		this._cacheDragDimensions( helper );
 
@@ -402,6 +402,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	},
 
 	_originalHash: function( pointerPosition ) {
+	
 		var ret = {
 			position: this.position,
 			offset: copy( this.offset ),
@@ -557,10 +558,13 @@ if ( $.uiBackCompat !== false ) {
 
 	});
 
-	// helper 'original' or 'clone' value
+	// helper 'original' or 'clone' value + helper return value
 	$.widget( "ui.draggable", $.ui.draggable, {
 
 		_create: function() {
+		
+			var self = this,
+				orig = this._originalHash;
 
 			this._super();
 
@@ -571,6 +575,18 @@ if ( $.uiBackCompat !== false ) {
 			if ( this.options.helper === 'clone' ) {
 				this.options.helper = true;
 			}
+			
+			this._originalHash = function() {
+			
+				var ret = orig.apply( self, arguments );
+				
+				if ( !ret.helper ) {
+					ret.helper = self.element;
+				}
+				
+				return ret;
+			
+			};
 
 		},
 
