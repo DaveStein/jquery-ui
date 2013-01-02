@@ -402,7 +402,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	},
 
 	_originalHash: function( pointerPosition ) {
-	
+
 		var ret = {
 			position: this.position,
 			offset: copy( this.offset ),
@@ -562,7 +562,7 @@ if ( $.uiBackCompat !== false ) {
 	$.widget( "ui.draggable", $.ui.draggable, {
 
 		_create: function() {
-		
+
 			var self = this,
 				orig = this._originalHash;
 
@@ -575,17 +575,17 @@ if ( $.uiBackCompat !== false ) {
 			if ( this.options.helper === 'clone' ) {
 				this.options.helper = true;
 			}
-			
+
 			this._originalHash = function() {
-			
+
 				var ret = orig.apply( self, arguments );
-				
+
 				if ( !ret.helper ) {
 					ret.helper = self.element;
 				}
-				
+
 				return ret;
-			
+
 			};
 
 		},
@@ -726,6 +726,18 @@ if ( $.uiBackCompat !== false ) {
 				// No need to continue
 				if ( !cursorAt ) {
 					return;
+				}
+
+				// support array and string position notation
+				// TODO: Remove after 2.0, only used for backCompat
+				if ( typeof cursorAt === "string" ) {
+					cursorAt = cursorAt.split(" ");
+				}
+				if ( $.isArray( cursorAt ) ) {
+					cursorAt = {
+						left: +cursorAt[ 0 ],
+						top: +cursorAt[ 1 ] || 0
+					};
 				}
 
 				if ( "top" in cursorAt ) {
@@ -1300,9 +1312,13 @@ if ( $.uiBackCompat !== false ) {
 	});
 
 
+<<<<<<< HEAD:ui/draggable.js
 }
 
 return $.ui.draggable;
 
 }));
 
+=======
+}
+>>>>>>> support array and string position notation for cursorAt:ui/jquery.ui.draggable.js
