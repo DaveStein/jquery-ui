@@ -333,8 +333,22 @@ $.widget( "ui.draggable", $.ui.interaction, {
 			this.scrollParent.scrollTop( scrollTop +
 				this._speed( scrollSensitivity - yBottom ) );
 		} else if ( yTop < scrollSensitivity ) {
+<<<<<<< HEAD:ui/draggable.js
 			this.scrollParent.scrollTop( scrollTop -
 				this._speed( scrollSensitivity - yTop ) );
+=======
+
+			change = this._speed( scrollSensitivity - yTop );
+			newScrollTop = scrollTop - change;
+
+			// Don't do anything unless new value is "real"
+			if ( newScrollTop >= 0 ) {
+				this.scrollParent.scrollTop( newScrollTop );
+				this._speed( scrollSensitivity - yTop );
+				this.originalPointer.y = this.originalPointer.y - change;
+			}
+
+>>>>>>> Draggable: linted:ui/jquery.ui.draggable.js
 		}
 
 		// Handle horizontal scrolling
@@ -1312,13 +1326,8 @@ if ( $.uiBackCompat !== false ) {
 	});
 
 
-<<<<<<< HEAD:ui/draggable.js
 }
 
 return $.ui.draggable;
 
 }));
-
-=======
-}
->>>>>>> support array and string position notation for cursorAt:ui/jquery.ui.draggable.js
