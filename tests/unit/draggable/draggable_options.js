@@ -183,15 +183,9 @@ test( "{ cancel: 'span' }", function() {
 });
 
 test( "{ cancel: ? }, unexpected", function() {
-<<<<<<< HEAD
 	expect( 12 );
 
 	var element,
-=======
-	expect( 6 );
-
-	var el,
->>>>>>> Draggable Tests: Remove Future Unsupported APIs
 		unexpected = {
 			"true": true,
 			"false": false,
@@ -202,15 +196,9 @@ test( "{ cancel: ? }, unexpected", function() {
 		};
 
 	$.each( unexpected, function( key, val ) {
-<<<<<<< HEAD
 		element = $( "#draggable2" ).draggable({ cancel: val });
 		TestHelpers.draggable.shouldMove( element, "cancel: " + key );
 		element.draggable( "destroy" );
-=======
-		el = $("#draggable2").draggable({ cancel: val });
-		TestHelpers.draggable.shouldMove( el, "cancel: " + key );
-		el.draggable("destroy");
->>>>>>> Draggable Tests: Remove Future Unsupported APIs
 	});
 });
 
@@ -551,7 +539,6 @@ test( "cursorAt", function() {
 	});
 });
 
-<<<<<<< HEAD
 test( "cursorAt, switching after initialization", function() {
 	expect( 24 );
 
@@ -587,10 +574,6 @@ test( "cursorAt, switching after initialization", function() {
 
 			element.draggable( "option", "cursorAt", false );
 			element.draggable( "option", "cursorAt", testData.cursorAt );
-=======
-test("{ grid: [50, 50] }, relative", function() {
-	expect( 2 );
->>>>>>> Draggable Tests: Remove Future Unsupported APIs
 
 			element.simulate( "drag", {
 				moves: 1,
