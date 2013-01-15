@@ -202,6 +202,24 @@ test( "{ cancel: ? }, unexpected", function() {
 	});
 });
 
+test("cancel, default, switching after initialization", function() {
+	expect( 3 );
+
+	$("<div id='draggable-option-cancel-default'><input type='text'></div>").appendTo("#main");
+
+	var input = $("#draggable-option-cancel-default input"),
+		el = $("#draggable-option-cancel-default").draggable();
+
+	TestHelpers.draggable.testDrag(el, input, 50, 50, 0, 0);
+
+	el.draggable('option', 'cancel', 'textarea' );
+	TestHelpers.draggable.testDrag(el, input, 50, 50, 50, 50);
+
+	el.draggable('option', 'cancel', 'input' );
+	TestHelpers.draggable.testDrag(el, input, 50, 50, 0, 0);
+
+});
+
 /*
 test( "{ cancel: Selectors }, matching parent selector", function() {
 
@@ -496,6 +514,27 @@ test( "cursor, default, switching after initialization", function() {
 	element.draggable( "option", "cursor", "ns-resize" );
 	TestHelpers.draggable.move( element, 1, 1 );
 	equal( element.data( "last_dragged_cursor" ), "ns-resize" );
+});
+
+test("cursor, default, switching after initialization", function() {
+
+	expect(3);
+
+	var el = $("#draggable1").draggable();
+
+	TestHelpers.draggable.trackMouseCss( el );
+
+	TestHelpers.draggable.move( el, 1, 1 );
+	equal( el.data("last_dragged_cursor"), "auto" );
+
+	el.draggable( "option", "cursor", "move" );
+	TestHelpers.draggable.move( el, 1, 1 );
+	equal( el.data("last_dragged_cursor"), "move" );
+
+	el.draggable( "option", "cursor", "ns-resize" );
+	TestHelpers.draggable.move( el, 1, 1 );
+	equal( el.data("last_dragged_cursor"), "ns-resize" );
+
 });
 
 test( "cursorAt", function() {
