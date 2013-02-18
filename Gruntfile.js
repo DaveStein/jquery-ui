@@ -8,6 +8,7 @@ var
 		"core.js",
 		"widget.js",
 		"mouse.js",
+		"interaction.js",
 		"draggable.js",
 		"droppable.js",
 		"resizable.js",
