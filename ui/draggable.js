@@ -333,10 +333,6 @@ $.widget( "ui.draggable", $.ui.interaction, {
 			this.scrollParent.scrollTop( scrollTop +
 				this._speed( scrollSensitivity - yBottom ) );
 		} else if ( yTop < scrollSensitivity ) {
-<<<<<<< HEAD:ui/draggable.js
-			this.scrollParent.scrollTop( scrollTop -
-				this._speed( scrollSensitivity - yTop ) );
-=======
 
 			change = this._speed( scrollSensitivity - yTop );
 			newScrollTop = scrollTop - change;
@@ -348,7 +344,6 @@ $.widget( "ui.draggable", $.ui.interaction, {
 				this.originalPointer.y = this.originalPointer.y - change;
 			}
 
->>>>>>> Draggable: linted:ui/jquery.ui.draggable.js
 		}
 
 		// Handle horizontal scrolling
@@ -600,23 +595,39 @@ if ( $.uiBackCompat !== false ) {
 
 			};
 
-		},
+		}
+
+	});
+
+	// Overwriting _setOption to handle multiple backCompats
+	$.widget( "ui.draggable", $.ui.draggable, {
 
 		_setOption: function( key, value ) {
 
-			if ( key !== 'helper' ) {
+			if ( key !== "helper" && key !== "cancel" ) {
 				return this._super( key, value );
 			}
 
-			if ( value === 'clone' ) {
-				value = true;
-			}
+			// If part of helper backcompat
+			if ( key === "helper" ) {
 
-			if ( value === 'original' ) {
-				value = false;
-			}
+				if ( value === "clone" ) {
+					value = true;
+				}
 
-			this._super( key, value );
+				if ( value === "original" ) {
+					value = false;
+				}
+
+				this._super( key, value );
+
+			} else {
+
+				// If part of cancel backcompat
+				this._super( key, value );
+				this.options.exclude = this.options.cancel;
+
+			}
 
 		}
 
@@ -664,17 +675,6 @@ if ( $.uiBackCompat !== false ) {
 			if ( this.options.cancel !== null ) {
 				this.options.exclude = this.options.cancel;
 			}
-
-		},
-
-		_setOption: function( key, value ) {
-
-			if ( key !== 'cancel' ) {
-				return this._super( key, value );
-			}
-
-			this._super( key, value );
-			this.options.exclude = this.options.cancel;
 
 		}
 
