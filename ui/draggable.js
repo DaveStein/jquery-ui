@@ -555,7 +555,11 @@ if ( $.uiBackCompat !== false ) {
 
 			var el = this.options.appendTo;
 
+<<<<<<< HEAD:ui/draggable.js
 			if ( el === 'parent' ) {
+=======
+			if ( el === "parent" || el === null ) {
+>>>>>>> Draggable Unit: Fixes for `appendTo`:ui/jquery.ui.draggable.js
 				el = this.dragEl.parent();
 			}
 
