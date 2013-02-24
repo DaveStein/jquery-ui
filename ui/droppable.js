@@ -185,7 +185,7 @@ $.extend( $.ui.droppable, {
 			return ui.pointer.x >= this.offset.left && ui.pointer.x <= edges.right &&
 				ui.pointer.y >= this.offset.top && ui.pointer.y <= edges.bottom;
 		},
-		
+
 		// Draggable should be entirely inside droppable
 		fit: function( event, edges, ui ) {
 			return edges.draggableRight <= edges.right &&
@@ -227,6 +227,15 @@ $.extend( $.ui.droppable, {
 
 // DEPRECATED
 if ( $.uiBackCompat !== false ) {
+
+	// accept option
+	$.widget( "ui.droppable", $.ui.droppable, {
+
+		options: {
+			accept: "*"
+		}
+
+	});
 
 	// activeClass option
 	$.widget( "ui.droppable", $.ui.droppable, {
@@ -309,22 +318,22 @@ if ( $.uiBackCompat !== false ) {
 		}
 
 	});
-	
+
 	// scope option
 	$.widget( "ui.droppable", $.ui.droppable, {
 
 		options: {
 			scope: "default"
 		},
-		
+
 		_isAcceptable: function( element ) {
-		
+
 			var draggable = $(element).data( "ui-draggable" );
 
 			if ( this.options.scope !== "default" && draggable && draggable.options.scope === this.options.scope ) {
 				return true;
 			}
-			
+
 			return this._super( element );
 
 		}
