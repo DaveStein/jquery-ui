@@ -3,37 +3,90 @@
  */
 (function($) {
 
-module( "droppable: options" );
+module("droppable: options");
 
-/*
-test( "{ accept '*' }, default ", function() {
-	ok(false, 'missing test - untested code is broken code');
-});
+test("{ accept '*' }, default ", function() {
 
-test( "{ accept: Selector }", function() {
-	ok(false, 'missing test - untested code is broken code');
-});
-
-test( "{ accept: function(draggable) }", function() {
-	ok(false, 'missing test - untested code is broken code');
-});
-
-test( "activeClass", function() {
-	ok(false, 'missing test - untested code is broken code');
-});
-*/
-test( "{ addClasses: true }, default", function() {
 	expect( 1 );
-	var el = $( "<div />" ).droppable({ addClasses: true });
-	ok( el.is( ".ui-droppable" ), "'ui-droppable' class added" );
-	el.droppable( "destroy" );
+
+	var droppable = $("#droppable1").droppable(),
+		draggable = $("#draggable1").draggable();
+
+	TestHelpers.droppable.shouldDrop( draggable, droppable, "Default" );
+
+
 });
 
-test( "{ addClasses: false }", function() {
-	expect( 1 );
-	var el = $( "<div />" ).droppable({ addClasses: false });
-	ok( !el.is( ".ui-droppable" ), "'ui-droppable' class not added" );
-	el.droppable( "destroy" );
+test("{ accept: Selector }", function() {
+	expect( 3 );
+
+	var target = $("#droppable1").droppable(),
+		source = $("#draggable1").draggable();
+
+	TestHelpers.droppable.shouldDrop( source, target, "Default" );
+
+	target.droppable( "option", "accept", "#foo" );
+	TestHelpers.droppable.shouldNotDrop( source, target, "Not correct selector" );
+
+	target.droppable( "option", "accept", "#draggable1" );
+	TestHelpers.droppable.shouldDrop( source, target, "Correct selector" );
+
+});
+
+test("{ accept: Function }", function() {
+
+	expect( 5 );
+
+	var target = $("#droppable1").droppable(),
+		source = $("#draggable1").draggable(),
+		counter = 0;
+
+
+	function accept() {
+		++counter;
+		return ( counter%2 === 0 );
+	}
+
+	target.droppable( "option", "accept", accept );
+
+	TestHelpers.droppable.shouldNotDrop( source, target, "Function returns false" );
+	TestHelpers.droppable.shouldDrop( source, target, "Function returns true" );
+	TestHelpers.droppable.shouldNotDrop( source, target, "Function returns false" );
+	TestHelpers.droppable.shouldDrop( source, target, "Function returns true" );
+
+	target.droppable( "option", "accept", "*" );
+	TestHelpers.droppable.shouldDrop( source, target, "Reset back to *" );
+
+});
+
+
+
+test("activeClass", function() {
+
+	expect( 6 );
+
+	var target = $("#droppable1").droppable(),
+		source = $("#draggable1").draggable(),
+		myclass = "myclass",
+		hasclass = false;
+
+	source.on( "drag", function() {
+		hasclass = target.hasClass( myclass );
+	});
+
+	TestHelpers.droppable.shouldDrop( source, target );
+	equal( hasclass, false, "Option not set yet" );
+
+	target.droppable( "option", "activeClass", myclass );
+	TestHelpers.droppable.shouldDrop( source, target );
+	equal( hasclass, true, "Option set" );
+
+	target.droppable( "option", "activeClass", false );
+	TestHelpers.droppable.shouldDrop( source, target );
+	equal( hasclass, false, "Option unset" );
+
+
+
 });
 
 test( "scope", function() {
@@ -78,7 +131,7 @@ test( "scope", function() {
 	equal( draggableOffset.top, oldDraggableOffset.top );
 });
 /*
-test( "greedy", function() {
+test("greedy", function() {
 	ok(false, 'missing test - untested code is broken code');
 });
 
