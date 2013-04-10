@@ -1,12 +1,12 @@
 /*!
- * jQuery UI Droppable @VERSION
+ * jQuery UI Interaction @VERSION
  * http://jqueryui.com
  *
  * Copyright 2014 jQuery Foundation and other contributors
  * Released under the MIT license.
  * http://jquery.org/license
  *
- * http://api.jqueryui.com/droppable/
+ * http://api.jqueryui.com/interaction/
  */
 (function( factory ) {
 	if ( typeof define === "function" && define.amd ) {
