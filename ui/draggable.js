@@ -99,11 +99,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		this.dragDimensions = null;
 
 		// The actual dragging element, should always be a jQuery object
-<<<<<<< HEAD:ui/draggable.js
-		this.dragEl = ( this.options.helper === true || typeof this.options.helper === 'function' ) ?
-=======
 		this.dragEl = ( this.options.helper === true || $.isFunction( this.options.helper ) ) ?
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 			this._createHelper( pointerPosition ) :
 			this.element;
 
@@ -232,11 +228,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		if ( this._trigger( "stop", event,
 				this._fullHash( pointerPosition ) ) !== false ) {
 			if ( this.options.helper ) {
-<<<<<<< HEAD:ui/draggable.js
-				delete this.element.data( 'uiDraggable' ).helper;
-=======
 				delete this.helper;
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 				this.dragEl.remove();
 			}
 			this._resetDomPosition();
@@ -269,13 +261,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 			this.helper.appendTo( this._appendTo() || this.document[ 0 ].body );
 		}
 
-<<<<<<< HEAD:ui/draggable.js
-		this.element.data( 'uiDraggable' ).helper = helper;
-
-		this._cacheDragDimensions( helper );
-=======
 		this._cacheDragDimensions( this.helper );
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 
 		return this.helper
 			// Helper must be absolute to function properly
@@ -575,11 +561,6 @@ $.widget( "ui.draggable", $.ui.draggable, {
 	}
 });
 
-<<<<<<< HEAD:ui/draggable.js
-=======
-
-
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 // DEPRECATED
 if ( $.uiBackCompat !== false ) {
 
@@ -604,16 +585,7 @@ if ( $.uiBackCompat !== false ) {
 	// helper "original" or "clone" value + helper return value
 	$.widget( "ui.draggable", $.ui.draggable, {
 		_create: function() {
-<<<<<<< HEAD:ui/draggable.js
-			var self = this,
-				orig = this._originalHash;
-
-			this._super();
-
-			if ( this.options.helper === 'original' ) {
-=======
 			if ( this.options.helper === "original" ) {
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 				this.options.helper = false;
 			}
 
@@ -849,13 +821,8 @@ if ( $.uiBackCompat !== false ) {
 						return;
 					}
 
-<<<<<<< HEAD:ui/draggable.js
-				// Cache the original opacity of draggable element to reset later
-				originalOpacity = self.dragEl.css( 'opacity' );
-=======
 					// Cache the original opacity of draggable element to reset later
 					originalOpacity = this.dragEl.css( "opacity" );
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 
 					// Set draggable element to new opacity
 					this.dragEl.css( "opacity", this.options.opacity );
@@ -886,25 +853,11 @@ if ( $.uiBackCompat !== false ) {
 
 			this._super();
 
-<<<<<<< HEAD:ui/draggable.js
-			this.element.on( "dragbeforestart", function() {
-
-				// No need to continue
-				if ( !self.options.revert ) {
-					return;
-				}
-
-				// Cache the original css of draggable element to reset later
-				originalLeft = self.dragEl.css( 'left' );
-				originalTop = self.dragEl.css( 'top' );
-				originalPosition = self.dragEl.css( 'position' );
-=======
 			this._on({
 				dragbeforestart: function() {
 					if ( !this.options.revert ) {
 						return;
 					}
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 
 					// Cache the original css of draggable element to reset later
 					originalLeft = this.dragEl.css( "left" );
@@ -945,13 +898,8 @@ if ( $.uiBackCompat !== false ) {
 						return;
 					}
 
-<<<<<<< HEAD:ui/draggable.js
-				// Cache the original zIndex of draggable element to reset later
-				originalZIndex = self.dragEl.css( 'z-index' );
-=======
 					// Cache the original zIndex of draggable element to reset later
 					originalZindex = this.dragEl.css( "z-index" );
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 
 					// Set draggable element to new zIndex
 					this.dragEl.css( "z-index", this.options.zIndex );
@@ -1262,16 +1210,10 @@ if ( $.uiBackCompat !== false ) {
 
 			this._super();
 
-<<<<<<< HEAD:ui/draggable.js
-			this.element.on( "dragstart", function() {
-				drops = $(':data(ui-sortable)');
-			});
-=======
 			this._on({
 				dragstart: function() {
 					drops = $( ":data(ui-sortable)" );
 				},
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 
 				drag: function() {
 					if ( this.options.refreshPositions !== true ) {
@@ -1282,13 +1224,6 @@ if ( $.uiBackCompat !== false ) {
 						$( this ).sortable( "refreshPositions" );
 					});
 				}
-<<<<<<< HEAD:ui/draggable.js
-
-				drops.each( function() {
-					$(this).sortable('refreshPositions');
-				});
-=======
->>>>>>> Draggable: Cleanup.:ui/jquery.ui.draggable.js
 			});
 		}
 	});
