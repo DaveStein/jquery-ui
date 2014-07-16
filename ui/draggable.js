@@ -307,8 +307,8 @@ $.widget( "ui.draggable", $.ui.interaction, {
 
 		// TODO: add proper support comment
 		// Webkit will give back auto if there is no explicit value
-		left = ( left === "auto" ) ? 0: parseInt( left, 10 );
-		top = ( top === "auto" ) ? 0: parseInt( top, 10 );
+		left = ( left === "auto" ) ? 0 : parseInt( left, 10 );
+		top = ( top === "auto" ) ? 0 : parseInt( top, 10 );
 
 		return {
 			left: left - scrollLeft,
@@ -330,7 +330,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 				this.overflowOffset.top :
 				scrollTop,
 			xRight = this.overflow.width + overflowLeft - pointerPosition.x,
-			xLeft = pointerPosition.x- overflowLeft,
+			xLeft = pointerPosition.x - overflowLeft,
 			yBottom = this.overflow.height + overflowTop - pointerPosition.y,
 			yTop = pointerPosition.y - overflowTop;
 
@@ -589,7 +589,7 @@ if ( $.uiBackCompat !== false ) {
 				this.options.helper = false;
 			}
 
-			if ( this.options.helper === 'clone' ) {
+			if ( this.options.helper === "clone" ) {
 				this.options.helper = true;
 			}
 
@@ -1001,7 +1001,7 @@ if ( $.uiBackCompat !== false ) {
 	$.widget( "ui.draggable", $.ui.draggable, {
 		options: {
 			snap: false,
-			snapMode: 'both',
+			snapMode: "both",
 			snapTolerance: 20
 		},
 
@@ -1011,24 +1011,26 @@ if ( $.uiBackCompat !== false ) {
 
 			this._super();
 
-			this.element.on( 'dragstart', function() {
+			this.element.on( "dragstart", function() {
 
 				// Nothing to do
 				if ( !inst.options.snap ) {
 					return;
 				}
 
+        var selector = inst.options.snap === true ? ":data(ui-draggable)" : inst.options.snap;
+
 				// Reset snapElements on every start in case there have been changes
 				snapElements = [];
 
 				// Select either all draggable elements, or the selector that was passed in
-				$( inst.options.snap === true ? ':data(ui-draggable)' : inst.options.snap ).each(function() {
+				$( selector ).each(function() {
 
 					var el = $(this),
 						offset = el.offset();
 
 					// Don't add this draggable to list of elements for snapping
-					if( this === inst.element[0] ) {
+					if ( this === inst.element[0] ) {
 						return;
 					}
 
@@ -1044,22 +1046,22 @@ if ( $.uiBackCompat !== false ) {
 				});
 
 				inst.margins = {
-					left: (parseInt(inst.element.css("marginLeft"),10) || 0),
-					top: (parseInt(inst.element.css("marginTop"),10) || 0),
-					right: (parseInt(inst.element.css("marginRight"),10) || 0),
-					bottom: (parseInt(inst.element.css("marginBottom"),10) || 0)
+					left: (parseInt(inst.element.css("marginLeft"), 10) || 0),
+					top: (parseInt(inst.element.css("marginTop"), 10) || 0),
+					right: (parseInt(inst.element.css("marginRight"), 10) || 0),
+					bottom: (parseInt(inst.element.css("marginBottom"), 10) || 0)
 				};
 
 			});
 
-			this.element.on( 'drag', function( event, ui ) {
+			this.element.on( "drag", function( event, ui ) {
 
 				// Nothing to do
 				if ( !inst.options.snap ) {
 					return;
 				}
 
-				var ts, bs, ls, rs, l, r, t, b, i, first,
+				var ts, bs, ls, rs, l, r, t, b, i, first, hash, positions, convertedPosition,
 					o = inst.options,
 					d = o.snapTolerance,
 					x1 = ui.offset.left, x2 = x1 + inst.dragDimensions.width,
@@ -1072,56 +1074,77 @@ if ( $.uiBackCompat !== false ) {
 					b = t + snapElements[i].height;
 
 					//Yes, I know, this is insane ;)
-					if(!((l-d < x1 && x1 < r+d && t-d < y1 && y1 < b+d) || (l-d < x1 && x1 < r+d && t-d < y2 && y2 < b+d) || (l-d < x2 && x2 < r+d && t-d < y1 && y1 < b+d) || (l-d < x2 && x2 < r+d && t-d < y2 && y2 < b+d))) {
-						if(snapElements[i].snapping) {
-							(inst.options.snap.release && inst.options.snap.release.call(inst.element, event, $.extend(inst._uiHash(), { snapItem: snapElements[i].item })));
+					if (!((l - d < x1 && x1 < r + d && t - d < y1 && y1 < b + d) ||
+            (l - d < x1 && x1 < r + d && t - d < y2 && y2 < b + d) ||
+            (l - d < x2 && x2 < r + d && t - d < y1 && y1 < b + d) ||
+            (l - d < x2 && x2 < r + d && t - d < y2 && y2 < b + d))) {
+
+            hash = $.extend(inst._uiHash(), { snapItem: snapElements[i].item });
+						if (snapElements[i].snapping) {
+							(inst.options.snap.release &&
+                inst.options.snap.release.call(inst.element, event, hash));
 						}
 						snapElements[i].snapping = false;
 						continue;
 					}
 
-					if(o.snapMode !== 'inner') {
+					if (o.snapMode !== "inner") {
 						ts = Math.abs(t - y2) <= d;
 						bs = Math.abs(b - y1) <= d;
 						ls = Math.abs(l - x2) <= d;
 						rs = Math.abs(r - x1) <= d;
-						if(ts) {
-							ui.position.top = inst._convertPositionTo("relative", { top: t - inst.dragDimensions.height, left: 0 }).top - inst.margins.top;
+						if (ts) {
+              positions = { top: t - inst.dragDimensions.height, left: 0 };
+              convertedPosition = inst._convertPositionTo("relative", positions);
+							ui.position.top = convertedPosition.top - inst.margins.top;
 						}
-						if(bs) {
-							ui.position.top = inst._convertPositionTo("relative", { top: b, left: 0 }).top - inst.margins.top;
+						if (bs) {
+              convertedPosition = inst._convertPositionTo("relative", { top: b, left: 0 });
+							ui.position.top = convertedPosition.top - inst.margins.top;
 						}
-						if(ls) {
-							ui.position.left = inst._convertPositionTo("relative", { top: 0, left: l - inst.dragDimensions.width }).left - inst.margins.left;
+						if (ls) {
+              positions = { top: 0, left: l - inst.dragDimensions.width };
+              convertedPosition = inst._convertPositionTo("relative", positions);
+							ui.position.left = convertedPosition.left - inst.margins.left;
 						}
-						if(rs) {
-							ui.position.left = inst._convertPositionTo("relative", { top: 0, left: r }).left - inst.margins.left;
+						if (rs) {
+              positions = { top: 0, left: r };
+              convertedPosition = inst._convertPositionTo("relative", positions);
+							ui.position.left = convertedPosition.left - inst.margins.left;
 						}
 					}
 
 					first = (ts || bs || ls || rs);
 
-					if(o.snapMode !== 'outer') {
+					if (o.snapMode !== "outer") {
 						ts = Math.abs(t - y1) <= d;
 						bs = Math.abs(b - y2) <= d;
 						ls = Math.abs(l - x1) <= d;
 						rs = Math.abs(r - x2) <= d;
-						if(ts) {
-							ui.position.top = inst._convertPositionTo("relative", { top: t, left: 0 }).top - inst.margins.top;
+						if (ts) {
+              convertedPosition = inst._convertPositionTo("relative", { top: t, left: 0 });
+							ui.position.top = convertedPosition.top - inst.margins.top;
 						}
-						if(bs) {
-							ui.position.top = inst._convertPositionTo("relative", { top: b - inst.dragDimensions.height, left: 0 }).top - inst.margins.top;
+						if (bs) {
+              positions = { top: b - inst.dragDimensions.height, left: 0 };
+              convertedPosition = inst._convertPositionTo("relative", positions);
+							ui.position.top = convertedPosition.top - inst.margins.top;
 						}
-						if(ls) {
-							ui.position.left = inst._convertPositionTo("relative", { top: 0, left: l }).left - inst.margins.left;
+						if (ls) {
+              convertedPosition = inst._convertPositionTo("relative", { top: 0, left: l });
+							ui.position.left = convertedPosition.left - inst.margins.left;
 						}
-						if(rs) {
-							ui.position.left = inst._convertPositionTo("relative", { top: 0, left: r - inst.dragDimensions.width }).left - inst.margins.left;
+						if (rs) {
+              convertedPosition = inst._convertPositionTo("relative", positions);
+              positions = { top: 0, left: r - inst.dragDimensions.width };
+							ui.position.left = convertedPosition.left - inst.margins.left;
 						}
 					}
 
-					if(!snapElements[i].snapping && (ts || bs || ls || rs || first)) {
-						(inst.options.snap.snap && inst.options.snap.snap.call(inst.element, event, $.extend(inst._uiHash(), { snapItem: snapElements[i].item })));
+          hash = $.extend(inst._uiHash(), { snapItem: snapElements[i].item });
+					if (!snapElements[i].snapping && (ts || bs || ls || rs || first)) {
+						(inst.options.snap.snap &&
+              inst.options.snap.snap.call(inst.element, event, hash));
 					}
 					snapElements[i].snapping = (ts || bs || ls || rs || first);
 				}
@@ -1129,31 +1152,33 @@ if ( $.uiBackCompat !== false ) {
 		},
 
 		_convertPositionTo: function(d, pos) {
-			if(!pos) {
+			if (!pos) {
 				pos = this.position;
 			}
 
 			var mod = d === "absolute" ? 1 : -1,
 				offset = {},
-				scroll = this.cssPosition === 'absolute' && !(this.scrollParent[0] !== document && $.contains(this.scrollParent[0], this.offsetParent[0])) ? this.offsetParent : this.scrollParent, scrollIsRootNode = (/(html|body)/i).test(scroll[0].tagName);
+				scroll = this.cssPosition === "absolute" && !(this.scrollParent[0] !== document && $.contains(this.scrollParent[0], this.offsetParent[0])) ? this.offsetParent : this.scrollParent, scrollIsRootNode = (/(html|body)/i).test(scroll[0].tagName);
 
 			$.extend(offset, {
 				parent: this._getParentOffset(),
-				relative: this._getRelativeOffset() //This is a relative to absolute position minus the actual position calculation - only used for relative positioned helper
+				relative: this._getRelativeOffset()
 			});
 
 			return {
 				top: (
-					pos.top	+																// The absolute mouse position
-					offset.relative.top * mod +										// Only for relative positioned nodes: Relative offset from element to offset parent
-					offset.parent.top * mod -										// The offsetParent's offset without borders (offset + border)
-					( ( this.cssPosition === 'fixed' ? -this.scrollParent.scrollTop() : ( scrollIsRootNode ? 0 : scroll.scrollTop() ) ) * mod)
+					pos.top	+
+					offset.relative.top * mod +
+					offset.parent.top * mod -
+					( ( this.cssPosition === "fixed" ? -this.scrollParent.scrollTop() :
+            ( scrollIsRootNode ? 0 : scroll.scrollTop() ) ) * mod)
 				),
 				left: (
-					pos.left +																// The absolute mouse position
-					offset.relative.left * mod +										// Only for relative positioned nodes: Relative offset from element to offset parent
-					offset.parent.left * mod	-										// The offsetParent's offset without borders (offset + border)
-					( ( this.cssPosition === 'fixed' ? -this.scrollParent.scrollLeft() : scrollIsRootNode ? 0 : scroll.scrollLeft() ) * mod)
+					pos.left +
+					offset.relative.left * mod +
+					offset.parent.left * mod	-
+					( ( this.cssPosition === "fixed" ? -this.scrollParent.scrollLeft() :
+            scrollIsRootNode ? 0 : scroll.scrollLeft() ) * mod)
 				)
 			};
 		},
@@ -1164,34 +1189,43 @@ if ( $.uiBackCompat !== false ) {
 			this.offsetParent = this.dragEl.offsetParent();
 			var po = this.offsetParent.offset();
 
-			// This is a special case where we need to modify a offset calculated on start, since the following happened:
-			// 1. The position of the helper is absolute, so it's position is calculated based on the next positioned parent
-			// 2. The actual offset parent is a child of the scroll parent, and the scroll parent isn't the document, which means that
-			//    the scroll is included in the initial calculation of the offset of the parent, and never recalculated upon drag
-			if(this.cssPosition === 'absolute' && this.scrollParent[0] !== document && $.contains(this.scrollParent[0], this.offsetParent[0])) {
+			// Modify a offset calculated on start when the following happens:
+			// 1. The position of the helper is absolute, so it's position is calculated based on
+      //    the next positioned parent
+      // 2. The actual offset parent is a child of the scroll parent, and the scroll parent
+      //    isn't the document, which means that the scroll is included in the initial calculation
+      //    of the offset of the parent, and never recalculated upon drag
+			if (this.cssPosition === "absolute" && this.scrollParent[0] !== document &&
+        $.contains(this.scrollParent[0], this.offsetParent[0])) {
 				po.left += this.scrollParent.scrollLeft();
 				po.top += this.scrollParent.scrollTop();
 			}
 
-			//This needs to be actually done for all browsers, since pageX/pageY includes this information
-			//Ugly IE fix
-			if((this.offsetParent[0] === document.body) ||
-				(this.offsetParent[0].tagName && this.offsetParent[0].tagName.toLowerCase() === 'html' && $.ui.ie)) {
+			// This needs to be for all browsers, since pageX/pageY includes this information
+			// Ugly IE fix
+			if ((this.offsetParent[0] === document.body) ||
+				(this.offsetParent[0].tagName &&
+          this.offsetParent[0].tagName.toLowerCase() === "html" && $.ui.ie)) {
 				po = { top: 0, left: 0 };
 			}
 
 			return {
-				top: po.top + (parseInt(this.offsetParent.css("borderTopWidth"),10) || 0),
-				left: po.left + (parseInt(this.offsetParent.css("borderLeftWidth"),10) || 0)
+				top: po.top + (parseInt(this.offsetParent.css("borderTopWidth"), 10) || 0),
+				left: po.left + (parseInt(this.offsetParent.css("borderLeftWidth"), 10) || 0)
 			};
 		},
 
 		_getRelativeOffset: function() {
-			if(this.cssPosition === "relative") {
-				var p = this.element.position();
+			if (this.cssPosition === "relative") {
+				var p = this.element.position(),
+          cssTop = parseInt(this.dragEl.css("top"), 10),
+          cssLeft = parseInt(this.dragEl.css("left"), 10),
+          top = p.top - (cssTop || 0) + this.scrollParent.scrollTop(),
+          left = p.left - (cssLeft || 0) + this.scrollParent.scrollLeft();
+
 				return {
-					top: p.top - (parseInt(this.dragEl.css("top"),10) || 0) + this.scrollParent.scrollTop(),
-					left: p.left - (parseInt(this.dragEl.css("left"),10) || 0) + this.scrollParent.scrollLeft()
+					top: top,
+					left: left
 				};
 			}
 

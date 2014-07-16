@@ -89,8 +89,7 @@ $.widget( "ui.droppable", {
 			if ( this.options.accept.call( this.element, draggable ) !== true ) {
 				return false;
 			}
-		}
-		else if ( this.options.accept && !$( draggable ).is( this.options.accept ) ) {
+		} else if ( this.options.accept && !$( draggable ).is( this.options.accept ) ) {
 			return false;
 		}
 
@@ -122,7 +121,7 @@ $.widget( "ui.droppable", {
 
 	_stop: function( event ) {
 
-		var greedy_child,
+		var greedyChild,
 			self = this;
 
 		if ( this.over ) {
@@ -132,12 +131,12 @@ $.widget( "ui.droppable", {
 				var drop = $(this).data( self.widgetFullName );
 
 				if ( drop.options.greedy === true && drop.over === true ) {
-					greedy_child = true;
+					greedyChild = true;
 					return false;
 				}
 			});
 
-			if ( !greedy_child ) {
+			if ( !greedyChild ) {
 				this._trigger( "drop", event, this._uiHash() );
 			}
 		}
@@ -263,7 +262,6 @@ if ( $.uiBackCompat !== false ) {
 
 			});
 
-
 			// On dragstop, remove class if one was added
 			$(this.document[0].body).on( "dragstop", ".ui-draggable", function() {
 
@@ -304,7 +302,6 @@ if ( $.uiBackCompat !== false ) {
 
 			});
 
-
 			// On out, remove class if one was added
 			$(this.element).on( "dropout", function() {
 
@@ -330,7 +327,8 @@ if ( $.uiBackCompat !== false ) {
 
 			var draggable = $(element).data( "ui-draggable" );
 
-			if ( this.options.scope !== "default" && draggable && draggable.options.scope === this.options.scope ) {
+			if ( this.options.scope !== "default" &&
+				draggable && draggable.options.scope === this.options.scope ) {
 				return true;
 			}
 

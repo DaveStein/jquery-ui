@@ -15,7 +15,7 @@
 		define([
 			"jquery",
 			"./core",
-			"./widget",
+			"./widget"
 		], factory );
 	} else {
 
@@ -312,9 +312,8 @@ pointerHook = interaction.hooks.msPointer = {
 			"MSPointerCancel": stopHandler
 		});
 	}
-};
 
-});
+};
 
 return $.ui.interaction;
 

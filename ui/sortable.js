@@ -38,7 +38,7 @@ function copy( obj ) {
 $.widget( "ui.sortable", $.ui.interaction, {
 	version: "@VERSION",
 	widgetEventPrefix: "sort",
-	items: 'li', // TODO: move to options when API is ready
+	items: "li", // TODO: move to options when API is ready
 
 	// dragEl: element being dragged (original or helper)
 	// position: final CSS position of dragEl
@@ -76,10 +76,10 @@ $.widget( "ui.sortable", $.ui.interaction, {
 
 			var el = $(this);
 
-			sortablePositions.push([{
+			sortablePositions.push([ {
 				el: el,
 				offset: el.offset()
-			}]);
+			} ]);
 		});
 
 	},
@@ -110,14 +110,14 @@ $.widget( "ui.sortable", $.ui.interaction, {
 		// Create placeholder for while element is dragging
 		// TODO: what do we do about IDs?
 		// TODO: possibly use CSS for visibility portion
-		this.placeholder = this.dragEl.clone().removeAttr('id').css({
-			visibility : 'hidden',
-			position : this.originalCssPosition || ''
+		this.placeholder = this.dragEl.clone().removeAttr("id").css({
+			visibility: "hidden",
+			position: this.originalCssPosition || ""
 		});
 
 		this.dragEl.after( this.placeholder );
 
-		this.dragEl.css( 'position', 'absolute' );
+		this.dragEl.css( "position", "absolute" );
 
 		// // _createHelper() ensures that helpers are in the correct position
 		// // in the DOM, but we need to handle appendTo when there is no helper
@@ -145,7 +145,8 @@ $.widget( "ui.sortable", $.ui.interaction, {
 		this.offset = copy( this.startOffset );
 
 		// Cache the offset of scrollParent, if required for _handleScrolling
-		if ( this.scrollParent[0] !== this.document[0] && this.scrollParent[0].tagName !== "HTML" ) {
+		if ( this.scrollParent[0] !== this.document[0] &&
+			this.scrollParent[0].tagName !== "HTML" ) {
 			this.overflowOffset = this.scrollParent.offset();
 		}
 
@@ -175,9 +176,8 @@ $.widget( "ui.sortable", $.ui.interaction, {
 
 	_move: function( event, pointerPosition ) {
 
-		var sort, sortItem, sortIndex,
+		var sort, sortItem, sortIndex, addedDragHeight, addedSortHeight,
 			len = this.sortablePositions.length;
-
 
 		this._preparePosition( pointerPosition );
 
@@ -191,7 +191,7 @@ $.widget( "ui.sortable", $.ui.interaction, {
 		// Scroll the scrollParent, if needed
 		this._handleScrolling( pointerPosition );
 
-		for ( sortIndex=0; sortIndex<len; ++sortIndex ) {
+		for ( sortIndex = 0; sortIndex < len; ++sortIndex ) {
 
 			for ( sort in this.sortablePositions[sortIndex] ) {
 
@@ -205,20 +205,20 @@ $.widget( "ui.sortable", $.ui.interaction, {
 				if ( this._over( sortItem ) )  {
 
 					// TODO: cache height of element
-					if ( ( this.offset.top + this.dragEl.height() )	> ( sortItem.offset.top + sortItem.el.height()/2 ) ) {
+					addedDragHeight = this.offset.top + this.dragEl.height();
+					addedSortHeight = sortItem.offset.top + sortItem.el.height();
 
+					if ( addedDragHeight	> ( sortItem.offset.top + sortItem.el.height() / 2 ) ) {
 						sortItem.el.after( this.dragEl );
 						this.dragEl.after( this.placeholder );
 						this._setSortablePositions();
-					}
-					else if ( this.offset.top	< ( sortItem.offset.top + sortItem.el.height()/2 ) ) {
+					} else if ( this.offset.top	< ( addedSortHeight / 2 ) ) {
 						sortItem.el.before( this.dragEl );
 						this.dragEl.before( this.placeholder );
 						this._setSortablePositions();
 					}
 
 				}
-
 
 			}
 		}
@@ -257,16 +257,16 @@ $.widget( "ui.sortable", $.ui.interaction, {
 
 		// If there were inline styles before drag, set them back
 		if ( this.originalCssPosition ) {
-			this.dragEl.css( 'position', this.originalCssPosition );
-		}
-		// If there were no inline styles, let CSS take over again by removing inline absolute
-		else {
-			this.dragEl.css( 'position', '' );
+			this.dragEl.css( "position", this.originalCssPosition );
+		} else {
+			// If there were no inline styles, let CSS take over again by removing inline absolute
+			this.dragEl.css( "position", "" );
 		}
 
-		// TODO: should same thing be done here as is done for position or is there better way altogether
-		this.dragEl.css( 'left', '' );
-		this.dragEl.css( 'top', '' );
+		// TODO: should same thing be done here as is done for position
+		// or is there better way altogether
+		this.dragEl.css( "left", "" );
+		this.dragEl.css( "top", "" );
 
 		this.placeholder.remove();
 
@@ -334,8 +334,8 @@ $.widget( "ui.sortable", $.ui.interaction, {
 		top = this.dragEl.css( "top" );
 
 		// Webkit will give back auto if there is no explicit value
-		left = ( left === "auto" ) ? 0: parseInt( left, 10 );
-		top = ( top === "auto" ) ? 0: parseInt( top, 10 );
+		left = ( left === "auto" ) ? 0 : parseInt( left, 10 );
+		top = ( top === "auto" ) ? 0 : parseInt( top, 10 );
 
 		return {
 			left: left - scrollLeft,
@@ -359,7 +359,7 @@ $.widget( "ui.sortable", $.ui.interaction, {
 				this.overflowOffset.top :
 				scrollTop,
 			xRight = this.overflow.width + overflowLeft - pointerPosition.x,
-			xLeft = pointerPosition.x- overflowLeft,
+			xLeft = pointerPosition.x - overflowLeft,
 			yBottom = this.overflow.height + overflowTop - pointerPosition.y,
 			yTop = pointerPosition.y - overflowTop;
 
