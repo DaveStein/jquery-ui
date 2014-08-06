@@ -480,7 +480,7 @@ $.widget( "ui.draggable", $.ui.draggable, {
 
 	_create: function() {
 		this._super();
-		this._bind({
+		this._on({
 			dragstart: "_setContainment",
 			drag: "_contain"
 		});
