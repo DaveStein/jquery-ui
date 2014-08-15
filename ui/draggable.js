@@ -14,19 +14,19 @@
  *	jquery.ui.widget.js
  */
 (function( factory ) {
-  if ( typeof define === "function" && define.amd ) {
+	if ( typeof define === "function" && define.amd ) {
 
-    // AMD. Register as an anonymous module.
-    define([
-      "jquery",
-      "./core",
-      "./widget"
-    ], factory );
-  } else {
+		// AMD. Register as an anonymous module.
+		define([
+			"jquery",
+			"./core",
+			"./widget"
+		], factory );
+	} else {
 
-    // Browser globals
-    factory( jQuery );
-  }
+		// Browser globals
+		factory( jQuery );
+	}
 }(function( $ ) {
 
 // Create a shallow copy of an object
@@ -58,25 +58,28 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	// originalPointer: pageX/Y at drag start (offset of pointer)
 	// startPosition: CSS position at drag start (after beforeStart)
 	// startOffset: offset at drag start (after beforeStart)
-	// tempPosition: overridable CSS position of dragEl
-	// overflowOffset: offset of scroll parent
-	// overflow: object containing width and height keys of scroll parent
 	// domPosition: object containing original parent and index when using
 	// appendTo option without a helper
 	// dragDimensions: saved off width and height used for various options
 
 	scrollSensitivity: 20,
 	scrollSpeed: 5,
+		handleClass: "ui-draggable-handle",
 
 	_create: function() {
 		this._super();
 
-		// Static position elements can't be moved with top/left
+		// Static position elements can"t be moved with top/left
 		if ( this.element.css( "position" ) === "static" ) {
 			this.element.css( "position", "relative" );
 		}
 
 		this.element.addClass( "ui-draggable" );
+
+		this._getHandle().addClass( this.handleClass );
+
+		this._handleManualScroll = $.proxy( this._handleManualScroll, this );
+
 	},
 
 	/** interaction interface **/
@@ -93,7 +96,16 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	},
 
 	_start: function( event, pointerPosition ) {
+		this.pointerPosition = pointerPosition;
+
 		var offset, startCssLeft, startCssTop, startPosition, startOffset;
+
+		// Should blur on start active element #4261
+		try {
+			this.document[0].activeElement.blur();
+		}
+		// Guard against browser errors when trying to blur something that can"t be blurred
+		catch (e){}
 
 		// Reset
 		this.dragDimensions = null;
@@ -103,6 +115,8 @@ $.widget( "ui.draggable", $.ui.interaction, {
 			this._createHelper( pointerPosition ) :
 			this.element;
 
+		offset = this.dragEl.offset();
+
 		// _createHelper() ensures that helpers are in the correct position
 		// in the DOM, but we need to handle appendTo when there is no helper
 		if ( this.options.appendTo && this.dragEl === this.element ) {
@@ -110,47 +124,32 @@ $.widget( "ui.draggable", $.ui.interaction, {
 				parent: this.element.parent(),
 				index: this.element.index()
 			};
-			offset = this.dragEl.offset();
+
 			this.dragEl
-				.appendTo( this._appendTo() )
-				.offset( offset );
+			.appendTo( this._appendTo() )
+			.offset( offset );
 		}
 
-		this.cssPosition = this.dragEl.css( "position" );
-		this.scrollParent = this.element.scrollParent();
+		this.scrollParent = this.dragEl.scrollParent( true );
 
 		// Cache starting positions
-		this.originalPosition = this.startPosition = this._getPosition();
-		this.originalOffset = this.startOffset = this.dragEl.offset();
+		this.position = this.originalPosition = this._getPosition();
+		this.offset = this.originalOffset = offset;
 		this.originalPointer = pointerPosition;
+
+		// Save off the usual properties locally, so they can be reverted
+		startCssLeft = this.dragEl.css( "left" );
+		startCssTop = this.dragEl.css( "top" );
+		startPosition = copy( this.position );
+		startOffset = copy( this.offset );
 
 		// If not already cached within _createHelper()
 		if ( !this.dragDimensions ) {
 			this._cacheDragDimensions( this.dragEl );
 		}
 
-		// Cache current position and offset
-		this.position = copy( this.startPosition );
-		this.offset = copy( this.startOffset );
-
-		// Cache the offset of scrollParent, if required for _handleScrolling()
-		if ( this.scrollParent[ 0 ] !== this.document[ 0 ] &&
-				this.scrollParent[ 0 ].tagName.toUpperCase() !== "HTML" ) {
-			this.overflowOffset = this.scrollParent.offset();
-		}
-
-		this.overflow = {
-			height: this.scrollParent[ 0 ] === this.document[ 0 ] ?
-				this.window.height() : this.scrollParent.height(),
-			width: this.scrollParent[ 0 ] === this.document[ 0 ] ?
-				this.window.width() : this.scrollParent.width()
-		};
-
-		this._preparePosition( pointerPosition );
-
-		// If user cancels beforeStart, don't allow dragging
-		if ( this._trigger( "beforeStart", event,
-				this._originalHash( pointerPosition ) ) === false ) {
+		// If user cancels beforeStart, don"t allow dragging
+		if ( this._triggerCallbackEvent( "beforeStart", event, pointerPosition ) === false ) {
 
 			// domPosition needs to be undone even if beforeStart is stopped,
 			// otherwise this.dragEl will remain in the `appendTo` element
@@ -158,19 +157,8 @@ $.widget( "ui.draggable", $.ui.interaction, {
 			return false;
 		}
 
-		// Save off the usual properties locally, so they can be reverted
-		startCssLeft = this.dragEl.css( "left" );
-		startCssTop = this.dragEl.css( "top" );
-		startPosition = copy( this._getPosition() );
-		startOffset = copy( this.offset );
-
-		this._setCss();
-		this.startPosition = this._getPosition();
-		this.startOffset = this.dragEl.offset();
-
-		// If user cancels on start, don't allow dragging
-		if ( this._trigger( "start", event,
-				this._fullHash( pointerPosition ) ) === false ) {
+		// If user cancels on start, don"t allow dragging
+		if ( this._triggerCallbackEvent( "start", event, pointerPosition ) === false ) {
 
 			// domPosition needs to be undone even if start is stopped,
 			// otherwise this.dragEl will remain in the `appendTo` element
@@ -185,30 +173,69 @@ $.widget( "ui.draggable", $.ui.interaction, {
 			return false;
 		}
 
+        this.startScrollLeft = 0;
+        this.startScrollTop = 0;
+
+        if ( this._isRoot() ) {
+            this.startScrollLeft = this.scrollParent.scrollLeft();
+            this.startScrollTop = this.scrollParent.scrollTop();
+        }
+
+        // Keep track of where cursor is vs position of draggable
+        // so the element does not stick to the top left of cursor
+        this.pointerTopDiff = pointerPosition.y - offset.top;
+        this.pointerLeftDiff = pointerPosition.x - offset.left;
+
 		this._blockFrames();
+
+		this.scrollParent.on( "scroll", this._handleManualScroll );
 	},
 
-	_move: function( event, pointerPosition ) {
-		this._preparePosition( pointerPosition );
+	_getHandle: function() {
+		var handle = this.element;
 
-		// If user cancels drag, don't move the element
-		if ( this._trigger( "drag", event,
-				this._fullHash( pointerPosition ) ) === false ) {
-			return;
+		if ( this.options.handle ) {
+			handle = this.element.find( this.options.handle );
+		}
+
+		return handle;
+	},
+
+    _isRoot: function() {
+        return this.scrollParent[0] !== this.document[0] &&
+                this.scrollParent[0] !== this.document[0].documentElement;
+    },
+
+	_move: function( event, pointerPosition ) {
+		this.pointerPosition = pointerPosition;
+
+		var positionBefore = copy(this.position),
+            offsetBefore = copy(this.offset);
+
+		this._setPositionAndOffset();
+
+        this._handleScrolling();
+
+		// If user cancels drag, don"t move the element
+		if ( this._triggerCallbackEvent( "drag", event, pointerPosition ) === false ) {
+            this.position = positionBefore;
+            this.offset = offsetBefore;
+            return;
 		}
 
 		this._setCss();
-
-		// Scroll the scrollParent, if needed
-		this._handleScrolling( pointerPosition );
 	},
 
 	_stop: function( event, pointerPosition ) {
-		this._preparePosition( pointerPosition );
+		this.pointerPosition = pointerPosition;
+
+		// Scroll event is async so can't unbind on stop, or it would not fire ever
+		setTimeout( $.proxy( function() {
+			this.scrollParent.off( "scroll", this._handleManualScroll);
+		}, this ));
 
 		// If user cancels stop, leave helper there
-		if ( this._trigger( "stop", event,
-				this._fullHash( pointerPosition ) ) !== false ) {
+		if ( this._triggerCallbackEvent( "stop", event, pointerPosition ) !== false ) {
 			if ( this.options.helper ) {
 				delete this.helper;
 				this.dragEl.remove();
@@ -217,9 +244,153 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		}
 
 		this._unblockFrames();
+
+		// On start preventDefault is called, which prevents selecting element #8399
+		try {
+			this.element.focus();
+		}
+		// Guard against browser errors when trying to focus something that can"t be focused
+		catch (e){}
 	},
 
 	/** internal **/
+
+	_setCss: function() {
+		this.dragEl.css({
+			top: this.position.top,
+			left: this.position.left
+		});
+	},
+
+	_setPositionAndOffset: function() {
+		var newTop, newLeft,
+			positionBefore = copy(this.position);
+
+		newTop = this.pointerPosition.y - this.pointerTopDiff - this.originalOffset.top + this.originalPosition.top;
+		newLeft = this.pointerPosition.x - this.pointerLeftDiff - this.originalOffset.left + this.originalPosition.left;
+
+		this.position = {
+			left: newLeft,
+			top: newTop
+		};
+
+		this.offset = {
+			left: this.offset.left + (newLeft - positionBefore.left),
+			top: this.offset.top + (newTop - positionBefore.top)
+		};
+
+	},
+
+	_handleScrolling: function() {
+
+		// TODO: Cache scroll parent dimensions on start
+		var distance = 0,
+			scrollChange = 0,
+			dragOffset = this.offset,
+			isDoc = ( this.scrollParent.is( this.document ) || this.scrollParent.is( "html" ) ),
+			scrollParent = isDoc ? $(window) : this.scrollParent,
+            overflowContainer = isDoc ? $( "html" ) : this.scrollParent,
+            scrollOffset = isDoc ? { top: 0, left: 0 } : scrollParent.offset(),
+            scrollTop = this.scrollParent.scrollTop(),
+            scrollLeft = this.scrollParent.scrollLeft(),
+			// Y coordinate of draggable"s bottom edge
+			dragBottomY = dragOffset.top + this.dragDimensions.height,
+			// X coordinate of draggable"s right edge
+			dragRightX = dragOffset.left + this.dragDimensions.width,
+			// Y coordinate of scroll parent"s bottom edge
+			scrollBottomY = ( scrollOffset.top + scrollParent.outerHeight() ),
+			// X coordinate of scroll parent"s right edge
+			scrollRightX = ( scrollOffset.left + scrollParent.outerWidth() ),
+			// Distance draggable"s bottom edge is from the bottom of its scroll parent"s
+			dragDistanceFromBottomScrollEdge = scrollBottomY - dragBottomY,
+			// Distance draggable"s right edge is from the right of its scroll parent"s
+			dragDistanceFromRightScrollEdge = scrollRightX - dragRightX;
+
+        // TODO: cache this elsewhere
+        if ( overflowContainer.css("overflow") === "hidden" ) {
+            return;
+        }
+
+		// Vertical scrolling
+		if ( dragDistanceFromBottomScrollEdge < this.scrollSensitivity ) {
+
+			// Scroll down
+			distance = this.scrollSensitivity - dragBottomY;
+			scrollChange = this._speed( distance );
+            this.offset.top -= scrollChange;
+			scrollParent.scrollTop( scrollTop + scrollChange );
+
+		} else if ( dragOffset.top < scrollTop ) {
+
+			// Scroll up
+			distance = this.scrollSensitivity - dragOffset.top;
+			scrollChange = this._speed( distance );
+
+            if ( scrollTop - scrollChange >= 0 ) {
+                this.offset.top += scrollChange;
+				scrollParent.scrollTop( scrollTop - scrollChange );
+			}
+
+		}
+
+		// Hotizontal scrolling
+		if ( dragDistanceFromRightScrollEdge < this.scrollSensitivity ) {
+
+			// Scroll right
+			distance = this.scrollSensitivity - dragRightX;
+			scrollChange = this._speed( distance );
+			scrollParent.scrollLeft( scrollLeft + scrollChange );
+            this.offset.left -= scrollChange;
+
+		} else if ( dragOffset.left < scrollLeft ) {
+
+			// Scroll left
+			distance = this.scrollSensitivity - dragOffset.left;
+			scrollChange = this._speed( distance );
+
+            if ( scrollLeft - scrollChange >= 0 ) {
+                this.offset.left += scrollChange;
+				scrollParent.scrollLeft( scrollLeft - scrollChange );
+			}
+
+		}
+
+	},
+
+	_handleManualScroll: function() {
+		var scrollTopDiff = this.scrollParent.scrollTop() - this.startScrollTop,
+			scrollLeftDiff = this.scrollParent.scrollLeft() - this.startScrollLeft;
+
+		this.startScrollTop += scrollTopDiff;
+		this.startScrollLeft += scrollLeftDiff;
+		this.pointerTopDiff -= scrollTopDiff;
+		this.pointerLeftDiff -= scrollLeftDiff;
+
+		this._setPositionAndOffset();
+		this._setCss();
+	},
+
+	_triggerCallbackEvent: function( eventname, event, pointerPosition ) {
+		var triggered, diff,
+				hash = this._fullHash( pointerPosition ),
+				beforePosition = copy( this.position );
+
+		triggered = this._trigger( eventname, event, hash );
+
+		// User has changed in callback
+		if ( hash.position.left !== beforePosition.left ) {
+			diff = hash.position.left - beforePosition.left;
+			this.offset.left += diff;
+		}
+
+		// User has changed in callback
+		if ( hash.position.top !== beforePosition.top ) {
+			diff = hash.position.top - beforePosition.top;
+			this.offset.top += diff;
+		}
+
+		return triggered;
+	},
 
 	_createHelper: function( pointerPosition ) {
 		var offset = this.element.offset(),
@@ -262,7 +433,6 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	},
 
 	_resetDomPosition: function() {
-
 		// Nothing to do in this case
 		if ( !this.domPosition ) {
 			return;
@@ -285,86 +455,33 @@ $.widget( "ui.draggable", $.ui.interaction, {
 	},
 
 	_getPosition: function() {
-		var left, top, position,
-			scrollTop = this.scrollParent.scrollTop(),
-			scrollLeft = this.scrollParent.scrollLeft();
+		var left = this.dragEl.css( "left" ),
+			top = this.dragEl.css( "top" );
 
-		// If fixed or absolute
-		if ( this.cssPosition !== "relative" ) {
-			position = this.dragEl.position();
-
-			// Take into account scrollbar
-			position.top -= scrollTop;
-			position.left -= scrollLeft;
-
-			return position;
-		}
-
-		// When using relative, css values are checked,
-		// otherwise the position wouldn't account for padding on ancestors
-		left = this.dragEl.css( "left" );
-		top = this.dragEl.css( "top" );
-
-		// TODO: add proper support comment
 		// Webkit will give back auto if there is no explicit value
 		left = ( left === "auto" ) ? 0 : parseInt( left, 10 );
 		top = ( top === "auto" ) ? 0 : parseInt( top, 10 );
 
+		// Investigate: Test pass/fails don't change with or without this line
+		// Seems there should be more tests for starting with scrollParent scrolled
+		// top += this.scrollParent.scrollTop();
+		// left += this.scrollParent.scrollTop();
+
 		return {
-			left: left - scrollLeft,
-			top: top - scrollTop
+			left: left,
+			top: top
 		};
 	},
 
-	_handleScrolling: function( pointerPosition ) {
-		var newScrollTop, newScrollLeft, change,
-			scrollTop = this.scrollParent.scrollTop(),
-			scrollLeft = this.scrollParent.scrollLeft(),
-			scrollSensitivity = this.scrollSensitivity,
-
-			// overflowOffset is only set when scrollParent is not doc/html
-			overflowLeft = this.overflowOffset ?
-				this.overflowOffset.left :
-				scrollLeft,
-			overflowTop = this.overflowOffset ?
-				this.overflowOffset.top :
-				scrollTop,
-			xRight = this.overflow.width + overflowLeft - pointerPosition.x,
-			xLeft = pointerPosition.x - overflowLeft,
-			yBottom = this.overflow.height + overflowTop - pointerPosition.y,
-			yTop = pointerPosition.y - overflowTop;
-
-		// Handle vertical scrolling
-		if ( yBottom < scrollSensitivity ) {
-			change = this._speed( scrollSensitivity - yBottom );
-			this.scrollParent.scrollTop( scrollTop + change );
-			this.originalPointer.y = this.originalPointer.y + change;
-		} else if ( yTop < scrollSensitivity ) {
-			change = this._speed( scrollSensitivity - yTop );
-			newScrollTop = scrollTop - change;
-
-			// Don't do anything unless new value is "real"
-			if ( newScrollTop >= 0 ) {
-				this.scrollParent.scrollTop( newScrollTop );
-				this._speed( scrollSensitivity - yTop );
-				this.originalPointer.y = this.originalPointer.y - change;
-			}
+	_setOption: function( key, value ) {
+		if ( key === "handle" ) {
+			this._getHandle().removeClass(this.handleClass);
 		}
 
-		// Handle horizontal scrolling
-		if ( xRight < scrollSensitivity ) {
-			change = this._speed( scrollSensitivity - xRight );
-			this.scrollParent.scrollLeft( scrollLeft + change);
-			this.originalPointer.x = this.originalPointer.x + change;
-		} else if ( xLeft < scrollSensitivity ) {
-			change = this._speed( scrollSensitivity - xLeft );
-			newScrollLeft = scrollLeft - change;
+		this._super( key, value );
 
-			// Don't do anything unless new value is "real"
-			if ( newScrollLeft >= 0 ) {
-				this.scrollParent.scrollLeft( newScrollLeft );
-				this.originalPointer.x = this.originalPointer.x - change;
-			}
+		if ( key === "handle" ) {
+			this._getHandle().addClass(this.handleClass);
 		}
 	},
 
@@ -398,34 +515,9 @@ $.widget( "ui.draggable", $.ui.interaction, {
 		this.offset.top = this.startOffset.top + topDiff;
 	},
 
-	// Places draggable where event indicates
-	_setCss: function() {
-		var newLeft = this.position.left,
-			newTop = this.position.top;
-
-		// User overriding left/top so shortcut math is no longer valid
-		if ( this.tempPosition.left !== this.position.left ||
-				this.tempPosition.top !== this.position.top ) {
-
-			// Reset offset based on difference of expected and overridden values
-			this.offset.left += newLeft - this.tempPosition.left;
-			this.offset.top += newTop - this.tempPosition.top;
-		}
-
-		// TODO: does this work with nested scrollable parents?
-		if ( this.cssPosition !== "fixed" ) {
-			newLeft += this.scrollParent.scrollLeft();
-			newTop += this.scrollParent.scrollTop();
-		}
-
-		this.dragEl.css({
-			left: newLeft,
-			top: newTop
-		});
-	},
-
 	_originalHash: function( pointerPosition ) {
 		var ret = {
+			// Only position should be changeable via callbacks
 			position: this.position,
 			offset: copy( this.offset ),
 			pointer: copy( pointerPosition )
@@ -451,11 +543,11 @@ $.widget( "ui.draggable", $.ui.interaction, {
 			var iframe = $( this );
 
 			return $( "<div>" )
-				.css( "position", "absolute" )
-				.appendTo( iframe.parent() )
-				.outerWidth( iframe.outerWidth() )
-				.outerHeight( iframe.outerHeight() )
-				.offset( iframe.offset() )[ 0 ];
+			.css( "position", "absolute" )
+			.appendTo( iframe.parent() )
+			.outerWidth( iframe.outerWidth() )
+			.outerHeight( iframe.outerHeight() )
+			.offset( iframe.offset() )[ 0 ];
 		});
 	},
 
@@ -468,6 +560,7 @@ $.widget( "ui.draggable", $.ui.interaction, {
 
 	_destroy: function() {
 		this.element.removeClass( "ui-draggable" );
+		this._getHandle().removeClass(this.handleClass);
 		this._super();
 	}
 });
@@ -496,20 +589,20 @@ $.widget( "ui.draggable", $.ui.draggable, {
 		}
 
 		if ( $.isArray( container ) ) {
-			offset = container.offset();
-			left = offset.left +
-				(parseFloat( $.css( container[ 0 ], "borderLeftWidth", true ) ) || 0) +
-				(parseFloat( $.css( container[ 0 ], "paddingLeft", true ) ) || 0);
-			top = offset.top +
-				(parseFloat( $.css( container[ 0 ], "borderTopWidth", true ) ) || 0) +
-				(parseFloat( $.css( container[ 0 ], "paddingTop", true ) ) || 0);
-			right = left + container.width();
-			bottom = top + container.height();
-		} else {
 			left = container[ 0 ];
 			top = container[ 1 ];
 			right = container[ 2 ];
 			bottom = container[ 3 ];
+		} else if ( container ) {
+			offset = container.offset();
+			left = offset.left +
+				(parseFloat( $.css( container[ 0 ], "borderRightWidth", true ) ) || 0) +
+				(parseFloat( $.css( container[ 0 ], "paddingLeft", true ) ) || 0);
+			top = offset.top +
+				(parseFloat( $.css( container[ 0 ], "borderBottomWidth", true ) ) || 0) +
+				(parseFloat( $.css( container[ 0 ], "paddingTop", true ) ) || 0);
+			right = left + container.width();
+			bottom = top + container.height();
 		}
 
 		this.containment = {
@@ -533,13 +626,9 @@ $.widget( "ui.draggable", $.ui.draggable, {
 
 		ui.position.left = Math.max( ui.position.left,
 			containment.left - containment.leftDiff );
-		ui.position.left = Math.min( ui.position.left,
-			containment.right - containment.width - containment.leftDiff );
 
 		ui.position.top = Math.max( ui.position.top,
 			containment.top - containment.topDiff );
-		ui.position.top = Math.min( ui.position.top,
-			containment.bottom - containment.height - containment.topDiff );
 	},
 
 	_getContainer: function() {
@@ -550,6 +639,8 @@ $.widget( "ui.draggable", $.ui.draggable, {
 			container = null;
 		} else if ( containment === "parent" ) {
 			container = this.element.parent();
+		} else if ( $.isArray( containment ) ) {
+			container = containment;
 		} else {
 			container = $( containment );
 			if ( !container.length ) {
@@ -630,10 +721,12 @@ if ( $.uiBackCompat !== false ) {
 				drag: function( event, ui ) {
 					if ( this.options.axis === "x" ) {
 						ui.position.top = ui.originalPosition.top;
+						ui.offset.top = ui.originalOffset.top;
 					}
 
 					if ( this.options.axis === "y" ) {
 						ui.position.left = ui.originalPosition.left;
+						ui.offset.left = ui.originalOffset.left;
 					}
 				}
 			});
@@ -670,26 +763,27 @@ if ( $.uiBackCompat !== false ) {
 			cursor: "auto"
 		},
 
+		_stop: function() {
+			// Unable to use dragstop as event in order to set back the cursor
+			// if element was removed #6889
+			if ( this.options.cursor ) {
+				this.document[0].body.style.cursor = this._startCursor;
+			}
+
+			this._super.apply(this, arguments);
+		},
+
 		_create: function() {
-			var startCursor, body;
+			var body = $( this.document[ 0 ].body );
 
 			this._super();
-
-			body = $( this.document[ 0 ].body );
 
 			this._on({
 				// Cache original cursor to set back
 				dragbeforestart: function() {
 					if ( this.options.cursor ) {
-						startCursor = body[ 0 ].style.cursor;
+						this._startCursor = body[ 0 ].style.cursor || "";
 						body.css( "cursor", this.options.cursor );
-					}
-				},
-
-				// Set back cursor to whatever default was
-				dragstop: function() {
-					if ( this.options.cursor ) {
-						body.css( "cursor", startCursor );
 					}
 				}
 			});
@@ -943,7 +1037,7 @@ if ( $.uiBackCompat !== false ) {
 			return this._super( distance );
 		},
 
-		_handleScrolling: function( pointerPosition ) {
+		_handleScrolling: function() {
 			if ( !this.options.scroll ) {
 				return;
 			}
@@ -952,7 +1046,7 @@ if ( $.uiBackCompat !== false ) {
 				this.scrollSensitivity = this.options.scrollSensitivity;
 			}
 
-			this._super( pointerPosition );
+			this._super();
 		}
 	});
 
@@ -1018,7 +1112,7 @@ if ( $.uiBackCompat !== false ) {
 					return;
 				}
 
-        var selector = inst.options.snap === true ? ":data(ui-draggable)" : inst.options.snap;
+				var selector = inst.options.snap === true ? ":data(ui-draggable)" : inst.options.snap;
 
 				// Reset snapElements on every start in case there have been changes
 				snapElements = [];
@@ -1029,7 +1123,7 @@ if ( $.uiBackCompat !== false ) {
 					var el = $(this),
 						offset = el.offset();
 
-					// Don't add this draggable to list of elements for snapping
+					// Don"t add this draggable to list of elements for snapping
 					if ( this === inst.element[0] ) {
 						return;
 					}
@@ -1075,14 +1169,14 @@ if ( $.uiBackCompat !== false ) {
 
 					//Yes, I know, this is insane ;)
 					if (!((l - d < x1 && x1 < r + d && t - d < y1 && y1 < b + d) ||
-            (l - d < x1 && x1 < r + d && t - d < y2 && y2 < b + d) ||
-            (l - d < x2 && x2 < r + d && t - d < y1 && y1 < b + d) ||
-            (l - d < x2 && x2 < r + d && t - d < y2 && y2 < b + d))) {
+						(l - d < x1 && x1 < r + d && t - d < y2 && y2 < b + d) ||
+						(l - d < x2 && x2 < r + d && t - d < y1 && y1 < b + d) ||
+						(l - d < x2 && x2 < r + d && t - d < y2 && y2 < b + d))) {
 
-            hash = $.extend(inst._uiHash(), { snapItem: snapElements[i].item });
+						hash = $.extend(inst._fullHash(), { snapItem: snapElements[i].item });
 						if (snapElements[i].snapping) {
 							(inst.options.snap.release &&
-                inst.options.snap.release.call(inst.element, event, hash));
+								inst.options.snap.release.call(inst.element, event, hash));
 						}
 						snapElements[i].snapping = false;
 						continue;
@@ -1094,22 +1188,22 @@ if ( $.uiBackCompat !== false ) {
 						ls = Math.abs(l - x2) <= d;
 						rs = Math.abs(r - x1) <= d;
 						if (ts) {
-              positions = { top: t - inst.dragDimensions.height, left: 0 };
-              convertedPosition = inst._convertPositionTo("relative", positions);
+							positions = { top: t - inst.dragDimensions.height, left: 0 };
+							convertedPosition = inst._convertPositionTo("relative", positions);
 							ui.position.top = convertedPosition.top - inst.margins.top;
 						}
 						if (bs) {
-              convertedPosition = inst._convertPositionTo("relative", { top: b, left: 0 });
+							convertedPosition = inst._convertPositionTo("relative", { top: b, left: 0 });
 							ui.position.top = convertedPosition.top - inst.margins.top;
 						}
 						if (ls) {
-              positions = { top: 0, left: l - inst.dragDimensions.width };
-              convertedPosition = inst._convertPositionTo("relative", positions);
+							positions = { top: 0, left: l - inst.dragDimensions.width };
+							convertedPosition = inst._convertPositionTo("relative", positions);
 							ui.position.left = convertedPosition.left - inst.margins.left;
 						}
 						if (rs) {
-              positions = { top: 0, left: r };
-              convertedPosition = inst._convertPositionTo("relative", positions);
+							positions = { top: 0, left: r };
+							convertedPosition = inst._convertPositionTo("relative", positions);
 							ui.position.left = convertedPosition.left - inst.margins.left;
 						}
 					}
@@ -1122,29 +1216,29 @@ if ( $.uiBackCompat !== false ) {
 						ls = Math.abs(l - x1) <= d;
 						rs = Math.abs(r - x2) <= d;
 						if (ts) {
-              convertedPosition = inst._convertPositionTo("relative", { top: t, left: 0 });
+							convertedPosition = inst._convertPositionTo("relative", { top: t, left: 0 });
 							ui.position.top = convertedPosition.top - inst.margins.top;
 						}
 						if (bs) {
-              positions = { top: b - inst.dragDimensions.height, left: 0 };
-              convertedPosition = inst._convertPositionTo("relative", positions);
+							positions = { top: b - inst.dragDimensions.height, left: 0 };
+							convertedPosition = inst._convertPositionTo("relative", positions);
 							ui.position.top = convertedPosition.top - inst.margins.top;
 						}
 						if (ls) {
-              convertedPosition = inst._convertPositionTo("relative", { top: 0, left: l });
+							convertedPosition = inst._convertPositionTo("relative", { top: 0, left: l });
 							ui.position.left = convertedPosition.left - inst.margins.left;
 						}
 						if (rs) {
-              convertedPosition = inst._convertPositionTo("relative", positions);
-              positions = { top: 0, left: r - inst.dragDimensions.width };
+							convertedPosition = inst._convertPositionTo("relative", positions);
+							positions = { top: 0, left: r - inst.dragDimensions.width };
 							ui.position.left = convertedPosition.left - inst.margins.left;
 						}
 					}
 
-          hash = $.extend(inst._uiHash(), { snapItem: snapElements[i].item });
+					hash = $.extend(inst._fullHash(), { snapItem: snapElements[i].item });
 					if (!snapElements[i].snapping && (ts || bs || ls || rs || first)) {
 						(inst.options.snap.snap &&
-              inst.options.snap.snap.call(inst.element, event, hash));
+							inst.options.snap.snap.call(inst.element, event, hash));
 					}
 					snapElements[i].snapping = (ts || bs || ls || rs || first);
 				}
@@ -1171,14 +1265,14 @@ if ( $.uiBackCompat !== false ) {
 					offset.relative.top * mod +
 					offset.parent.top * mod -
 					( ( this.cssPosition === "fixed" ? -this.scrollParent.scrollTop() :
-            ( scrollIsRootNode ? 0 : scroll.scrollTop() ) ) * mod)
+						( scrollIsRootNode ? 0 : scroll.scrollTop() ) ) * mod)
 				),
 				left: (
 					pos.left +
 					offset.relative.left * mod +
 					offset.parent.left * mod	-
 					( ( this.cssPosition === "fixed" ? -this.scrollParent.scrollLeft() :
-            scrollIsRootNode ? 0 : scroll.scrollLeft() ) * mod)
+						scrollIsRootNode ? 0 : scroll.scrollLeft() ) * mod)
 				)
 			};
 		},
@@ -1190,13 +1284,13 @@ if ( $.uiBackCompat !== false ) {
 			var po = this.offsetParent.offset();
 
 			// Modify a offset calculated on start when the following happens:
-			// 1. The position of the helper is absolute, so it's position is calculated based on
-      //    the next positioned parent
-      // 2. The actual offset parent is a child of the scroll parent, and the scroll parent
-      //    isn't the document, which means that the scroll is included in the initial calculation
-      //    of the offset of the parent, and never recalculated upon drag
+			// 1. The position of the helper is absolute, so it"s position is calculated based on
+			//		the next positioned parent
+			// 2. The actual offset parent is a child of the scroll parent, and the scroll parent
+			//		isn"t the document, which means that the scroll is included in the initial calculation
+			//		of the offset of the parent, and never recalculated upon drag
 			if (this.cssPosition === "absolute" && this.scrollParent[0] !== document &&
-        $.contains(this.scrollParent[0], this.offsetParent[0])) {
+				$.contains(this.scrollParent[0], this.offsetParent[0])) {
 				po.left += this.scrollParent.scrollLeft();
 				po.top += this.scrollParent.scrollTop();
 			}
@@ -1205,7 +1299,7 @@ if ( $.uiBackCompat !== false ) {
 			// Ugly IE fix
 			if ((this.offsetParent[0] === document.body) ||
 				(this.offsetParent[0].tagName &&
-          this.offsetParent[0].tagName.toLowerCase() === "html" && $.ui.ie)) {
+					this.offsetParent[0].tagName.toLowerCase() === "html" && $.ui.ie)) {
 				po = { top: 0, left: 0 };
 			}
 
@@ -1218,10 +1312,10 @@ if ( $.uiBackCompat !== false ) {
 		_getRelativeOffset: function() {
 			if (this.cssPosition === "relative") {
 				var p = this.element.position(),
-          cssTop = parseInt(this.dragEl.css("top"), 10),
-          cssLeft = parseInt(this.dragEl.css("left"), 10),
-          top = p.top - (cssTop || 0) + this.scrollParent.scrollTop(),
-          left = p.left - (cssLeft || 0) + this.scrollParent.scrollLeft();
+					cssTop = parseInt(this.dragEl.css("top"), 10),
+					cssLeft = parseInt(this.dragEl.css("left"), 10),
+					top = p.top - (cssTop || 0) + this.scrollParent.scrollTop(),
+					left = p.left - (cssLeft || 0) + this.scrollParent.scrollLeft();
 
 				return {
 					top: top,

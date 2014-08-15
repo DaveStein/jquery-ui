@@ -62,15 +62,22 @@ TestHelpers.draggable = {
 		TestHelpers.draggable.testDrag( el, handle, 100, 100, 0, 0, msg );
 	},
 	shouldNotDrag: function( el, msg, handle ) {
+		var didntDrag = true;
+
 		handle = handle || el;
-		$( el ).bind( "dragstop", function() {
-			ok( false, "should not drag " + msg );
+		$( el ).bind( "dragstop", function(e, ui) {
+
+			if ( ui.offset.left !==	ui.originalOffset.left || ui.offset.top !== ui.originalOffset.top ) {
+				didntDrag = false;
+			}
 		});
 		$( handle ).simulate( "drag", {
 			dx: 100,
 			dy: 100
 		});
 		$( el ).unbind( "dragstop" );
+
+		ok( didntDrag, "should not drag " + msg );
 	},
 	setScrollable: function( what, isScrollable ) {
 		var overflow = isScrollable ? "scroll" : "hidden";

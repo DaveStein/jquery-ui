@@ -245,8 +245,8 @@ pointerHook = interaction.hooks.msPointer = {
 				}
 
 				started = start( event, event.target, {
-					x: event.pageX,
-					y: event.pageY
+					x: event.clientX,
+					y: event.clientY
 				});
 
 				if ( started ) {

@@ -206,8 +206,8 @@ TestHelpers.onFocus= function( element, onFocus ) {
 
 TestHelpers.forceScrollableWindow = function( appendTo ) {
 	return $( "<div>" ).css({
-		height: "10000px",
-		width: "10000px"
+		height: "15000px",
+		width: "15000px"
 	}).appendTo( appendTo || "#qunit-fixture" );
 };
 

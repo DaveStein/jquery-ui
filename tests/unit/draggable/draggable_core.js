@@ -8,7 +8,7 @@ module( "draggable: core" );
 
 test( "element types", function() {
 	var typeNames = (
-			"p,h1,h2,h3,h4,h5,h6,blockquote,ol,ul,dl,div,form" +
+			"span,p,h1,h2,h3,h4,h5,h6,blockquote,ol,ul,dl,div,form" +
 			",table,fieldset,address,ins,del,em,strong,q,cite,dfn,abbr" +
 			",acronym,code,samp,kbd,var,img,hr" +
 			",input,button,label,select,iframe"
@@ -17,8 +17,10 @@ test( "element types", function() {
 	expect( typeNames.length * 2 );
 
 	$.each( typeNames, function( i ) {
+
 		var offsetBefore, offsetAfter,
 			typeName = typeNames[ i ],
+			text = "dragged[50, 50] " + "<" + typeName + ">",
 			el = $( document.createElement( typeName ) ).appendTo("#qunit-fixture");
 
 		if ( typeName === "table" ) {
@@ -34,9 +36,10 @@ test( "element types", function() {
 		offsetAfter = el.offset();
 
 		// Support: FF, Chrome, and IE9,
-		// there are some rounding errors in so we can't say equal, we have to settle for close enough
-		closeEnough( offsetBefore.left, offsetAfter.left - 50, 1, "dragged[50, 50] " + "<" + typeName + ">" );
-		closeEnough( offsetBefore.top, offsetAfter.top - 50, 1, "dragged[50, 50] " + "<" + typeName + ">" );
+		// there are some rounding errors in so we can't say equal,
+		// we have to settle for close enough
+		closeEnough( offsetAfter.left - 50, offsetBefore.left, 1, text + " left" );
+		closeEnough( offsetAfter.top - 50, offsetBefore.top, 1, text + " top" );
 		el.draggable("destroy");
 		el.remove();
 	});
@@ -53,7 +56,7 @@ test( "No options, absolute", function() {
 });
 
 test( "resizable handle with complex markup (#8756 / #8757)", function() {
-	expect( 2 );
+	expect( TestHelpers.draggable.unreliableContains ? 1 : 2 );
 
 	$( "#draggable1" )
 		.append(
@@ -93,8 +96,7 @@ test( "#8269: Removing draggable element on drop", function() {
 
 	// Support: Opera 12.10, Safari 5.1, jQuery <1.8
 	if ( TestHelpers.draggable.unreliableContains ) {
-		ok( true, "Opera <12.14 and Safari <6.0 report wrong values for $.contains in jQuery < 1.8" );
-		ok( true, "Opera <12.14 and Safari <6.0 report wrong values for $.contains in jQuery < 1.8" );
+		ok( true, "Opera <12.14 & Safari <6.0 report wrong values for $.contains in jQuery < 1.8" );
 	} else {
 		element.simulate( "drag", {
 			handle: "corner",
@@ -139,10 +141,11 @@ test( "#6258: not following mouse when scrolled and using overflow-y: scroll", f
 test( "#9315: jumps down with offset of scrollbar", function() {
 	expect( 2 );
 
-	var element = $( "#draggable2" ).draggable({
+	var text = "left position is correct when position is absolute",
+			element = $( "#draggable2" ).draggable({
 			stop: function( event, ui ) {
-				equal( ui.position.left, 11, "left position is correct when position is absolute" );
-				equal( ui.position.top, 11, "top position is correct when position is absolute" );
+				equal( ui.position.left, 11, text );
+				equal( ui.position.top, 11, text );
 				$( "html" ).scrollTop( 0 ).scrollLeft( 0 );
 			}
 		});
@@ -161,15 +164,16 @@ test( "#9315: jumps down with offset of scrollbar", function() {
 test( "#5009: scroll not working with parent's position fixed", function() {
 	expect( 2 );
 
-	var startValue = 300,
+	var text = "position is correct when parent position is fixed",
+		startValue = 300,
 		element = $( "#draggable1" ).wrap( "<div id='wrapper' />" ).draggable({
 			drag: function() {
 				startValue += 100;
 				$( document ).scrollTop( startValue ).scrollLeft( startValue );
 			},
 			stop: function( event, ui ) {
-				equal( ui.position.left, 10, "left position is correct when parent position is fixed" );
-				equal( ui.position.top, 10, "top position is correct when parent position is fixed" );
+				equal( ui.position.left, 10, text + " left" );
+				equal( ui.position.top, 10, text + " top" );
 				$( document ).scrollTop( 0 ).scrollLeft( 0 );
 			}
 		});
@@ -203,12 +207,12 @@ $( [ "hidden", "auto", "scroll" ] ).each(function() {
 			dragDelta = 20,
 			delta = 100,
 
-			// we scroll after each drag event, so subtract 1 from number of moves for expected
-			expected = delta + ( ( moves - 1 ) * dragDelta ),
+			expected = delta + ( moves * dragDelta ),
 			element = $( "#dragged" ).draggable({
 				drag: function() {
 					startValue += dragDelta;
 					$( "#outer" ).scrollTop( startValue ).scrollLeft( startValue );
+					element.data("uiDraggable")._handleManualScroll();
 				},
 				stop: function( event, ui ) {
 					equal( ui.position.left, expected, "left position is correct when grandparent is scrolled" );
@@ -248,18 +252,21 @@ test( "#5727: draggable from iframe", function() {
 	//TestHelpers.draggable.shouldMove( draggable1, "draggable from an iframe" );
 });
 
-test( "#8399: A draggable should become the active element after you are finished interacting with it, but not before.", function() {
+test( "#8399: A draggable should become the active element " +
+			"after you are finished interacting with it, but not before.", function() {
 	expect( 2 );
 
-	var element = $( "<a href='#'>link</a>" ).appendTo( "#qunit-fixture" ).draggable();
+	var element = $( "<a href='#'>link</a>" ).appendTo( "#qunit-fixture" ).draggable(),
+		strictText = "finishing moving a draggable anchor made it the active element";
 
 	$( document ).one( "mousemove", function() {
-		notStrictEqual( document.activeElement, element.get( 0 ), "moving a draggable anchor did not make it the active element" );
+		var text = "moving a draggable anchor did not make it the active element";
+		notStrictEqual( document.activeElement, element.get( 0 ), text );
 	});
 
 	TestHelpers.draggable.move( element, 50, 50 );
 
-	strictEqual( document.activeElement, element.get( 0 ), "finishing moving a draggable anchor made it the active element" );
+	strictEqual( document.activeElement, element.get( 0 ), strictText );
 });
 
 asyncTest( "#4261: active element should blur when mousing down on a draggable", function() {
@@ -269,11 +276,15 @@ asyncTest( "#4261: active element should blur when mousing down on a draggable",
 		element = $( "#draggable1" ).draggable();
 
 	TestHelpers.onFocus( textInput, function() {
-		strictEqual( document.activeElement, textInput.get( 0 ), "ensure that a focussed text input is the active element before mousing down on a draggable" );
+		var text1 = "ensure that a focussed text input is the active element before " +
+								"mousing down on a draggable",
+				text2 = "ensure the text input is no longer the active element after " +
+								"mousing down on a draggable";
+		strictEqual( document.activeElement, textInput.get( 0 ), text1 );
 
 		TestHelpers.draggable.move( element, 50, 50 );
 
-		notStrictEqual( document.activeElement, textInput.get( 0 ), "ensure the text input is no longer the active element after mousing down on a draggable" );
+		notStrictEqual( document.activeElement, textInput.get( 0 ), text2 );
 		start();
 	});
 });
